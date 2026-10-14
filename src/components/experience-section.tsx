@@ -1,10 +1,15 @@
+import { Link } from "@tanstack/react-router";
 import { useExperience } from "../data/experience-view";
 import { SectionState } from "./section-state";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 
-export function ExperienceSection() {
+export function ExperienceSection({
+  onProjectOpen,
+}: {
+  onProjectOpen?: (element: HTMLAnchorElement) => void;
+}) {
   const experience = useExperience();
 
   return (
@@ -37,54 +42,69 @@ export function ExperienceSection() {
                     <ul className="grid gap-4 pt-2 sm:grid-cols-2 xl:grid-cols-3">
                       {engagement.projects.map((project) => (
                         <li key={project.id}>
-                          <Card className="h-full">
-                            {project.thumbnail ? (
-                              <img
-                                alt={project.thumbnail.alt}
-                                className="aspect-[16/10] w-full object-cover"
-                                loading="lazy"
-                                src={project.thumbnail.src}
-                              />
-                            ) : (
-                              <div
-                                aria-label={`Placeholder image for ${project.name}`}
-                                className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 bg-accent/20 px-4 text-center text-accent-foreground"
-                                role="img"
-                              >
-                                <span className="text-xs font-semibold uppercase tracking-[0.2em]">
-                                  Placeholder
-                                </span>
-                                <span className="text-sm font-medium">
+                          <Link
+                            aria-label={`Open ${project.name}`}
+                            className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                            onClick={(event) =>
+                              onProjectOpen?.(event.currentTarget)
+                            }
+                            resetScroll={false}
+                            search={(previous) => ({
+                              ...previous,
+                              project: project.id,
+                              part: undefined,
+                            })}
+                            to="/"
+                          >
+                            <Card className="h-full">
+                              {project.thumbnail ? (
+                                <img
+                                  alt={project.thumbnail.alt}
+                                  className="aspect-[16/10] w-full object-cover"
+                                  loading="lazy"
+                                  src={project.thumbnail.src}
+                                />
+                              ) : (
+                                <div
+                                  aria-label={`Placeholder image for ${project.name}`}
+                                  className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 bg-accent/20 px-4 text-center text-accent-foreground"
+                                  role="img"
+                                >
+                                  <span className="text-xs font-semibold uppercase tracking-[0.2em]">
+                                    Placeholder
+                                  </span>
+                                  <span className="text-sm font-medium">
+                                    {project.name}
+                                  </span>
+                                </div>
+                              )}
+                              <CardHeader>
+                                <h4 className="text-base font-semibold tracking-tight">
                                   {project.name}
-                                </span>
-                              </div>
-                            )}
-                            <CardHeader>
-                              <h4 className="text-base font-semibold tracking-tight">
-                                {project.name}
-                              </h4>
-                              {project.clientName ? (
-                                <p className="text-muted-foreground">
-                                  Client: {project.clientName}
+                                </h4>
+                                {project.clientName ? (
+                                  <p className="text-muted-foreground">
+                                    Client: {project.clientName}
+                                  </p>
+                                ) : null}
+                              </CardHeader>
+                              <CardContent className="space-y-4">
+                                <p className="leading-relaxed text-muted-foreground">
+                                  {project.summary}
                                 </p>
-                              ) : null}
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                              <p className="leading-relaxed text-muted-foreground">
-                                {project.summary}
-                              </p>
-                              <ul
-                                aria-label={`Skills used in ${project.name}`}
-                                className="flex flex-wrap gap-2"
-                              >
-                                {project.skills.map((skill) => (
-                                  <li key={skill}>
-                                    <Badge variant="secondary">{skill}</Badge>
-                                  </li>
-                                ))}
-                              </ul>
-                            </CardContent>
-                          </Card>
+                                <ul
+                                  aria-label={`Skills used in ${project.name}`}
+                                  className="flex flex-wrap gap-2"
+                                >
+                                  {project.skills.map((skill) => (
+                                    <li key={skill}>
+                                      <Badge variant="secondary">{skill}</Badge>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </CardContent>
+                            </Card>
+                          </Link>
                         </li>
                       ))}
                     </ul>

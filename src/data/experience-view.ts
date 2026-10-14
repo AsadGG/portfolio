@@ -1,12 +1,13 @@
 import { useLiveQuery } from "@tanstack/react-db";
+import { useMemo } from "react";
 import {
   buildExperienceView,
-  ContentError,
+  createContentErrorState,
   type ExperienceEngagement,
-  GENERIC_CONTENT_ERROR_MESSAGE,
   type ViewState,
 } from "./data-module";
 import { useDataModule } from "./data-module-provider";
+import { useCollectionError } from "./use-collection-error";
 
 export function useExperience(): ViewState<ExperienceEngagement[]> {
   const {
@@ -17,11 +18,17 @@ export function useExperience(): ViewState<ExperienceEngagement[]> {
     experienceSkillsView,
     retryExperience,
   } = useDataModule();
+  const collections = useMemo(
+    () => [engagementsCollection, projectsCollection, skillsCollection],
+    [engagementsCollection, projectsCollection, skillsCollection],
+  );
+  const collectionError = useCollectionError(collections);
   const query = useLiveQuery(experienceView);
   const skillsQuery = useLiveQuery(experienceSkillsView);
   const retry = retryExperience;
 
   if (
+    collectionError ||
     engagementsCollection.utils.isError ||
     projectsCollection.utils.isError ||
     skillsCollection.utils.isError ||
@@ -34,14 +41,17 @@ export function useExperience(): ViewState<ExperienceEngagement[]> {
       skillsCollection.utils.lastError ??
       query.persistedError ??
       skillsQuery.persistedError;
-    return {
-      status: "error",
-      message:
-        error instanceof ContentError
-          ? error.message
-          : GENERIC_CONTENT_ERROR_MESSAGE,
+    return createContentErrorState(
+      error,
+      [
+        engagementsCollection.utils.lastError,
+        projectsCollection.utils.lastError,
+        skillsCollection.utils.lastError,
+        query.persistedError,
+        skillsQuery.persistedError,
+      ],
       retry,
-    };
+    );
   }
 
   if (query.data && skillsQuery.data) {

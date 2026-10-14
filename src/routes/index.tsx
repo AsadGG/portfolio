@@ -1,23 +1,46 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { z } from "zod";
 import { ContactLinks } from "../components/contact-links";
 import { EducationSection } from "../components/education-section";
 import { ExperienceSection } from "../components/experience-section";
 import { Footer } from "../components/footer";
 import { HighlightsSection } from "../components/highlights-section";
 import { IntroSection } from "../components/intro-section";
+import { ProjectDialog } from "../components/project-dialog";
 import { SectionState } from "../components/section-state";
 import { SkillsSection } from "../components/skills-section";
 import { Skeleton } from "../components/ui/skeleton";
 import { useProfile } from "../data/profile-view";
 
-export const Route = createFileRoute("/")({ component: Home });
+export const Route = createFileRoute("/")({
+  validateSearch: z.object({
+    project: z.string().optional(),
+    part: z.string().optional(),
+  }),
+  component: Home,
+});
 
 const heroClassName =
   "flex min-h-[75vh] flex-col items-start justify-center gap-4 py-16";
 
 function Home() {
   const profile = useProfile();
+  const { project } = Route.useSearch();
+  const navigate = useNavigate({ from: "/" });
+  const returnFocus = useRef<HTMLAnchorElement | null>(null);
+
+  const closeProject = () => {
+    navigate({
+      search: (previous) => ({
+        ...previous,
+        project: undefined,
+        part: undefined,
+      }),
+      replace: true,
+      resetScroll: false,
+    });
+  };
 
   useEffect(() => {
     if (profile.status === "ready") {
@@ -53,10 +76,19 @@ function Home() {
         <IntroSection />
         <HighlightsSection />
         <SkillsSection />
-        <ExperienceSection />
+        <ExperienceSection
+          onProjectOpen={(element) => {
+            returnFocus.current = element;
+          }}
+        />
         <EducationSection />
       </main>
       <Footer />
+      <ProjectDialog
+        onClose={closeProject}
+        projectId={project}
+        returnFocus={returnFocus}
+      />
     </>
   );
 }

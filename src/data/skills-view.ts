@@ -1,12 +1,13 @@
 import { useLiveQuery } from "@tanstack/react-db";
+import { useMemo } from "react";
 import {
-  ContentError,
-  GENERIC_CONTENT_ERROR_MESSAGE,
+  createContentErrorState,
   groupSkillsSection,
   type SkillGroup,
   type ViewState,
 } from "./data-module";
 import { useDataModule } from "./data-module-provider";
+import { useCollectionError } from "./use-collection-error";
 
 export function useSkillsSection(): ViewState<SkillGroup[]> {
   const {
@@ -15,9 +16,15 @@ export function useSkillsSection(): ViewState<SkillGroup[]> {
     skillsCollection,
     skillsSectionView,
   } = useDataModule();
+  const collections = useMemo(
+    () => [skillCategoriesCollection, skillsCollection],
+    [skillCategoriesCollection, skillsCollection],
+  );
+  const collectionError = useCollectionError(collections);
   const query = useLiveQuery(skillsSectionView);
 
   if (
+    collectionError ||
     skillCategoriesCollection.utils.isError ||
     skillsCollection.utils.isError ||
     query.isError
@@ -26,14 +33,14 @@ export function useSkillsSection(): ViewState<SkillGroup[]> {
       skillCategoriesCollection.utils.lastError ??
       skillsCollection.utils.lastError ??
       query.persistedError;
-    return {
-      status: "error",
-      message:
-        error instanceof ContentError
-          ? error.message
-          : GENERIC_CONTENT_ERROR_MESSAGE,
+    return createContentErrorState(
+      error,
+      [
+        skillCategoriesCollection.utils.lastError,
+        skillsCollection.utils.lastError,
+      ],
       retry,
-    };
+    );
   }
 
   if (query.data) {

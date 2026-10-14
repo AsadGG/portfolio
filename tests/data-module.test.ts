@@ -99,6 +99,51 @@ describe("content document transport", () => {
     ).rejects.toMatchObject({ message: GENERIC_CONTENT_ERROR_MESSAGE });
   });
 
+  it("accepts optional role and URL links on a Project", () => {
+    const project = {
+      id: "project",
+      engagementId: "engagement",
+      name: "Project",
+      summary: "Summary",
+      description: "Description",
+      skillIds: [],
+      images: [],
+      parts: [],
+      role: "my role",
+      links: {
+        live: "https://example.com",
+        repository: "https://github.com/example/project",
+      },
+    };
+
+    expect(projectSchema.parse(project)).toMatchObject({
+      role: "my role",
+      links: project.links,
+    });
+    const { role: _role, links: _links, ...withoutOptionalFields } = project;
+    expect(projectSchema.parse(withoutOptionalFields)).not.toHaveProperty(
+      "links",
+    );
+  });
+
+  it("rejects non-string roles and invalid Project link URLs", () => {
+    const project = {
+      id: "project",
+      engagementId: "engagement",
+      name: "Project",
+      summary: "Summary",
+      description: "Description",
+      skillIds: [],
+      images: [],
+      parts: [],
+    };
+
+    expect(() => projectSchema.parse({ ...project, role: 42 })).toThrow();
+    expect(() =>
+      projectSchema.parse({ ...project, links: { live: "bad" } }),
+    ).toThrow();
+  });
+
   it("rejects a list envelope without pagination", async () => {
     const module = createModule({
       statusCode: 200,

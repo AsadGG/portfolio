@@ -125,6 +125,11 @@ export const projectSchema = z
     images: z.array(imageSchema),
     parts: z.array(partSchema),
     clientName: z.string().min(1).optional(),
+    role: z.string().optional(),
+    links: z
+      .object({ live: z.url().optional(), repository: z.url().optional() })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine((project) => project.parts.length > 0 || project.description, {
@@ -367,6 +372,25 @@ export type ExperienceProject = {
   thumbnail?: ProjectImage;
 };
 
+export type ProjectDetailPart = ProjectPart & {
+  skills: string[];
+};
+
+export type ProjectDetail = {
+  id: string;
+  engagementId: string;
+  name: string;
+  summary: string;
+  description?: string;
+  clientName?: string;
+  role?: string;
+  links?: Project["links"];
+  skillIds: string[];
+  skills: string[];
+  images: ProjectImage[];
+  parts: ProjectDetailPart[];
+};
+
 export type SkillGroup = SkillCategory & { skills: Skill[] };
 
 type SkillsSectionRow = {
@@ -469,6 +493,45 @@ export class ContentError extends Error {
     this.name = "ContentError";
     this.cause = cause;
   }
+}
+
+type RetryableCollection = {
+  utils: {
+    isError: boolean;
+    refetch: (options: { throwOnError: true }) => Promise<unknown>;
+  };
+};
+
+type RetryAction = () => Promise<void>;
+
+function createRetryAction(
+  collections: ReadonlyArray<RetryableCollection>,
+): RetryAction {
+  return async () => {
+    await Promise.all(
+      collections
+        .filter((collection) => collection.utils.isError)
+        .map((collection) => collection.utils.refetch({ throwOnError: true })),
+    );
+  };
+}
+
+export function createContentErrorState(
+  error: unknown,
+  sourceErrors: ReadonlyArray<unknown>,
+  retry: RetryAction,
+) {
+  const sourceError = sourceErrors.find(
+    (candidate): candidate is ContentError => candidate instanceof ContentError,
+  );
+  return {
+    status: "error" as const,
+    message:
+      error instanceof ContentError
+        ? error.message
+        : (sourceError?.message ?? GENERIC_CONTENT_ERROR_MESSAGE),
+    retry,
+  };
 }
 
 export interface DataModuleOptions {
@@ -741,13 +804,11 @@ export function createDataModule(options: DataModuleOptions) {
     );
   }
 
-  async function retryExperience() {
-    await Promise.all(
-      [engagementsCollection, projectsCollection, skillsCollection]
-        .filter((collection) => collection.utils.isError)
-        .map((collection) => collection.utils.refetch({ throwOnError: true })),
-    );
-  }
+  const retryExperience = createRetryAction([
+    engagementsCollection,
+    projectsCollection,
+    skillsCollection,
+  ]);
 
   async function getExperience() {
     try {
@@ -768,21 +829,66 @@ export function createDataModule(options: DataModuleOptions) {
         retry: retryExperience,
       };
     } catch (error) {
-      const sourceError = [
-        engagementsCollection.utils.lastError,
-        projectsCollection.utils.lastError,
-        skillsCollection.utils.lastError,
-      ].find((source) => source instanceof ContentError);
+      return createContentErrorState(
+        error,
+        [
+          engagementsCollection.utils.lastError,
+          projectsCollection.utils.lastError,
+          skillsCollection.utils.lastError,
+        ],
+        retryExperience,
+      );
+    }
+  }
+
+  async function getProjectDetail(projectId: string) {
+    const retry = createRetryAction([projectsCollection, skillsCollection]);
+
+    try {
+      const [projects, skills] = await Promise.all([
+        projectsReferenceView.toArrayWhenReady(),
+        experienceSkillsView.toArrayWhenReady(),
+      ]);
+      const project = projects.find(({ id }) => id === projectId);
+      if (!project) return { status: "not-found" as const, retry };
+      const skillsById = new Map(skills.map((skill) => [skill.id, skill.name]));
+      const resolveSkillNames = (ids: string[]) =>
+        ids.flatMap((id) => {
+          const name = skillsById.get(id);
+          return name ? [name] : [];
+        });
       return {
-        status: "error" as const,
-        message:
-          error instanceof ContentError
-            ? error.message
-            : sourceError instanceof ContentError
-              ? sourceError.message
-              : GENERIC_CONTENT_ERROR_MESSAGE,
-        retry: retryExperience,
+        status: "ready" as const,
+        data: {
+          id: project.id,
+          engagementId: project.engagementId,
+          name: project.name,
+          summary: project.summary,
+          ...(project.description ? { description: project.description } : {}),
+          ...(project.clientName ? { clientName: project.clientName } : {}),
+          ...(project.role !== undefined ? { role: project.role } : {}),
+          ...(project.links ? { links: project.links } : {}),
+          skillIds: project.skillIds,
+          skills: resolveSkillNames([
+            ...new Set([
+              ...project.skillIds,
+              ...project.parts.flatMap((part) => part.skillIds),
+            ]),
+          ]),
+          images: project.images,
+          parts: project.parts.map((part) => ({
+            ...part,
+            skills: resolveSkillNames(part.skillIds),
+          })),
+        },
+        retry,
       };
+    } catch (error) {
+      return createContentErrorState(
+        error,
+        [projectsCollection.utils.lastError, skillsCollection.utils.lastError],
+        retry,
+      );
     }
   }
 
@@ -1020,6 +1126,7 @@ export function createDataModule(options: DataModuleOptions) {
     experienceSkillsView,
     retryExperience,
     getExperience,
+    getProjectDetail,
     educationCollection,
     educationView,
     getEducation,
