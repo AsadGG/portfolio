@@ -24,10 +24,32 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Asad Ur Rahman — Senior Full-Stack Software Engineer",
+      },
+      {
+        name: "description",
+        content:
+          "Asad Ur Rahman is a Senior Full-Stack Software Engineer based in Karachi, Pakistan.",
+      },
+      {
+        property: "og:title",
+        content: "Asad Ur Rahman — Senior Full-Stack Software Engineer",
+      },
+      {
+        property: "og:description",
+        content:
+          "Asad Ur Rahman is a Senior Full-Stack Software Engineer based in Karachi, Pakistan.",
+      },
+      {
+        property: "og:type",
+        content: "website",
       },
     ],
     links: [
+      {
+        rel: "icon",
+        href: "data:,",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -45,18 +67,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-            TanStackQueryDevtools,
-          ]}
-        />
+        {import.meta.env.DEV && (
+          <TanStackDevtools
+            config={{
+              position: "bottom-right",
+            }}
+            plugins={[
+              {
+                name: "Tanstack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
+              TanStackQueryDevtools,
+            ]}
+          />
+        )}
         <Scripts />
       </body>
     </html>

@@ -10,7 +10,7 @@ const config = defineConfig({
   plugins: [
     devtools(),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({ spa: { enabled: true } }),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),
   ],
