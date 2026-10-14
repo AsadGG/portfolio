@@ -3,9 +3,13 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   createRootRouteWithContext,
   HeadContent,
+  Outlet,
   Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useState } from "react";
+import { createDataModule } from "../data/data-module";
+import { DataModuleProvider } from "../data/data-module-provider";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 
@@ -57,7 +61,19 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     ],
   }),
   shellComponent: RootDocument,
+  component: RootComponent,
 });
+
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+  const [dataModule] = useState(() => createDataModule({ queryClient }));
+
+  return (
+    <DataModuleProvider dataModule={dataModule}>
+      <Outlet />
+    </DataModuleProvider>
+  );
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
