@@ -2,30 +2,32 @@ import { lazy, Suspense, useEffect, useState } from "react";
 
 const BackgroundScene = lazy(() => import("./background-scene"));
 
-type BackgroundMode = "checking" | "canvas" | "gradient";
+type BackgroundMode = "canvas" | "gradient";
 
 export function BackgroundLayer() {
-  const [mode, setMode] = useState<BackgroundMode>("checking");
-  const [sceneReady, setSceneReady] = useState(false);
+  const [mode, setMode] = useState<BackgroundMode>("gradient");
 
   useEffect(() => {
-    if (!supportsWebGL()) {
-      setMode("gradient");
-      return;
-    }
+    if (!supportsWebGL()) return;
 
-    setMode("canvas");
-    const frame = window.requestAnimationFrame(() => setSceneReady(true));
-    return () => window.cancelAnimationFrame(frame);
+    let sceneFrame: number | undefined;
+    const contentFrame = window.requestAnimationFrame(() => {
+      sceneFrame = window.requestAnimationFrame(() => setMode("canvas"));
+    });
+
+    return () => {
+      window.cancelAnimationFrame(contentFrame);
+      if (sceneFrame !== undefined) window.cancelAnimationFrame(sceneFrame);
+    };
   }, []);
 
   return (
     <div
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background bg-[image:radial-gradient(ellipse_at_18%_12%,color-mix(in_oklab,var(--electric-cyan)_16%,transparent),transparent_42%),radial-gradient(ellipse_at_82%_26%,color-mix(in_oklab,var(--electric-cyan)_8%,transparent),transparent_44%)]"
-      data-background={mode === "checking" ? "gradient" : mode}
+      data-background={mode}
     >
-      {sceneReady && mode === "canvas" && (
+      {mode === "canvas" && (
         <Suspense fallback={null}>
           <BackgroundScene />
         </Suspense>
