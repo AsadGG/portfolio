@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ProjectDetail } from "../data/data-module";
 import { useDataModule } from "../data/data-module-provider";
+import { Markdown } from "./markdown";
 import { Badge } from "./ui/badge";
 import {
   Dialog,
@@ -95,6 +96,7 @@ function ProjectContents({ project }: { project: ProjectDetail }) {
           {project.summary}
         </DialogDescription>
       </DialogHeader>
+      {project.description ? <Markdown>{project.description}</Markdown> : null}
       {project.links ? (
         <nav aria-label={`${project.name} links`} className="flex gap-4">
           {project.links.live ? (

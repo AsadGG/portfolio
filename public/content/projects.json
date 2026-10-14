@@ -7,7 +7,7 @@
       "engagementId": "urapp",
       "name": "WedWise",
       "summary": "A wedding planning platform for planners and couples. Owned frontend development and REST API integration across the product's planning workflows.",
-      "description": "Owned frontend development and REST API integration for a wedding planning platform used by planners and couples. Built modules for events, timelines, budgets, vendor tracking, tasks, meetings, contracts, guest management, moodboards, templates, calendars, and user permissions. Developed forms and API-connected workflows with React Hook Form, Zustand, TanStack Query, ky, and date-fns.",
+      "description": "Owned frontend development and REST API integration for a wedding planning platform used by planners and couples. Built modules for:\n\n- Events and timelines\n- Budgets and vendor tracking\n- Tasks, meetings and contracts\n- Guest management and moodboards\n- Templates, calendars and user permissions\n\nDeveloped forms and API-connected workflows with [React Hook Form](https://react-hook-form.com/), Zustand, TanStack Query, ky and date-fns.",
       "skillIds": ["react", "typescript", "react-hook-form", "zustand", "tanstack-query", "ky", "date-fns", "api-integration"],
       "images": [
         { "src": "images/wedwise/planning.svg", "alt": "Placeholder image for WedWise" },

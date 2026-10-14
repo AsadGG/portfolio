@@ -1,4 +1,27 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+
+type ProjectDescription = {
+  id: string;
+  description?: string;
+};
+
+async function interceptProjectDescription(
+  page: Page,
+  projectId: string,
+  description: string | undefined,
+) {
+  await page.route("**/content/projects.json", async (route) => {
+    const response = await route.fetch();
+    const document = (await response.json()) as {
+      data: ProjectDescription[];
+    };
+    const project = document.data.find(({ id }) => id === projectId);
+    if (!project) throw new Error(`Project not found: ${projectId}`);
+    if (description === undefined) delete project.description;
+    else project.description = description;
+    await route.fulfill({ response, body: JSON.stringify(document) });
+  });
+}
 
 test("Project cards open a shareable dialog without losing scroll or card focus", async ({
   page,
@@ -28,6 +51,55 @@ test("Project cards open a shareable dialog without losing scroll or card focus"
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(card).toBeFocused();
+});
+
+test("Project Descriptions render markdown with readable styling and safe links", async ({
+  page,
+}) => {
+  await page.goto("/?project=wedwise");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+
+  const description = dialog.getByTestId("markdown-content");
+  await expect(description).toHaveClass(/prose/);
+  await expect(description).toHaveClass(/prose-invert/);
+  await expect(description.locator("ul > li")).toHaveCount(5);
+  await expect(
+    description.getByRole("link", { name: "React Hook Form" }),
+  ).toHaveAttribute("target", "_blank");
+  await expect(
+    description.getByRole("link", { name: "React Hook Form" }),
+  ).toHaveAttribute("rel", "noopener noreferrer");
+
+  await page.goto("/?project=gripsun");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(
+    page
+      .getByTestId("markdown-content")
+      .getByText(/Installers claim fitted units/),
+  ).toBeVisible();
+});
+
+test("Project Description renders raw HTML as literal text and omits missing content", async ({
+  page,
+}) => {
+  await interceptProjectDescription(page, "gripsun", undefined);
+
+  await page.goto("/?project=gripsun");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByTestId("markdown-content")).toHaveCount(0);
+});
+
+test("raw HTML in a Project Description is displayed literally", async ({
+  page,
+}) => {
+  await interceptProjectDescription(page, "wedwise", "<b>x</b>");
+
+  await page.goto("/?project=wedwise");
+  const description = page.getByTestId("markdown-content");
+  await expect(description).toHaveText("<b>x</b>");
+  await expect(description.locator("b")).toHaveCount(0);
 });
 
 test("the Project dialog closes with its close button and browser back", async ({
