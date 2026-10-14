@@ -1,4 +1,5 @@
 import { useSkillsSection } from "../data/skills-view";
+import { SectionReveal } from "./section-reveal";
 import { SectionState } from "./section-state";
 import { Badge } from "./ui/badge";
 import { Skeleton } from "./ui/skeleton";
@@ -7,55 +8,53 @@ export function SkillsSection() {
   const skills = useSkillsSection();
 
   return (
-    <section
-      aria-label="Skills"
-      className="scroll-mt-16 py-16"
-      data-section="skills"
-    >
-      <SectionState skeleton={<SkillsSkeleton />} state={skills}>
-        {(categories) => (
-          <div className="space-y-8">
-            <h2
-              className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
-              id="skills"
-            >
-              Skills
-            </h2>
-            <div className="space-y-7">
-              {categories.map((category) => (
-                <section
-                  aria-labelledby={`skill-category-${category.id}`}
-                  className="space-y-3"
-                  key={category.id}
-                >
-                  <h3
-                    className="text-lg font-medium text-muted-foreground"
-                    id={`skill-category-${category.id}`}
+    <SectionReveal data-section="skills">
+      <section aria-label="Skills" className="scroll-mt-16 py-16">
+        <SectionState skeleton={<SkillsSkeleton />} state={skills}>
+          {(categories) => (
+            <div className="space-y-8">
+              <h2
+                className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
+                id="skills"
+              >
+                Skills
+              </h2>
+              <div className="space-y-7">
+                {categories.map((category) => (
+                  <section
+                    aria-labelledby={`skill-category-${category.id}`}
+                    className="space-y-3"
+                    key={category.id}
                   >
-                    {category.name}
-                  </h3>
-                  <ul
-                    aria-label={`${category.name} Skills`}
-                    className="flex flex-wrap gap-2"
-                  >
-                    {category.skills.map((skill) => (
-                      <li key={skill.id}>
-                        <Badge
-                          className="h-auto min-h-7 px-3 py-1 text-xs"
-                          variant="secondary"
-                        >
-                          {skill.name}
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
+                    <h3
+                      className="text-lg font-medium text-muted-foreground"
+                      id={`skill-category-${category.id}`}
+                    >
+                      {category.name}
+                    </h3>
+                    <ul
+                      aria-label={`${category.name} Skills`}
+                      className="flex flex-wrap gap-2"
+                    >
+                      {category.skills.map((skill) => (
+                        <li key={skill.id}>
+                          <Badge
+                            className="h-auto min-h-7 px-3 py-1 text-xs"
+                            variant="secondary"
+                          >
+                            {skill.name}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </SectionState>
-    </section>
+          )}
+        </SectionState>
+      </section>
+    </SectionReveal>
   );
 }
 

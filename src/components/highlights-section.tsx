@@ -1,4 +1,5 @@
 import { useHighlights } from "../data/highlights-view";
+import { SectionReveal } from "./section-reveal";
 import { SectionState } from "./section-state";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
@@ -7,7 +8,7 @@ export function HighlightsSection() {
   const highlights = useHighlights();
 
   return (
-    <div
+    <SectionReveal
       className="scroll-mt-16 py-16"
       data-section="highlights"
       id="highlights"
@@ -42,7 +43,7 @@ export function HighlightsSection() {
           </section>
         )}
       </SectionState>
-    </div>
+    </SectionReveal>
   );
 }
 

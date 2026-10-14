@@ -1,4 +1,5 @@
 import { useIntro } from "../data/intro-view";
+import { SectionReveal } from "./section-reveal";
 import { SectionState } from "./section-state";
 import { Skeleton } from "./ui/skeleton";
 
@@ -6,7 +7,7 @@ export function IntroSection() {
   const intro = useIntro();
 
   return (
-    <div className="scroll-mt-16 py-16" data-section="about">
+    <SectionReveal className="scroll-mt-16 py-16" data-section="about">
       <SectionState skeleton={<IntroSkeleton />} state={intro}>
         {(text) => (
           <section aria-labelledby="about" className="space-y-6">
@@ -24,7 +25,7 @@ export function IntroSection() {
           </section>
         )}
       </SectionState>
-    </div>
+    </SectionReveal>
   );
 }
 

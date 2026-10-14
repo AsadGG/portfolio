@@ -6,6 +6,8 @@ const READING_LINE = 64;
 
 export function ActiveSectionTracker() {
   useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+
     const targets = new Map<Element, (typeof SECTION_IDS)[number]>();
     const intersecting = new Set<Element>();
     let observer: IntersectionObserver;

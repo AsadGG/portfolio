@@ -1,4 +1,5 @@
 import { useEducation } from "../data/education-view";
+import { SectionReveal } from "./section-reveal";
 import { SectionState } from "./section-state";
 import { Skeleton } from "./ui/skeleton";
 
@@ -6,35 +7,33 @@ export function EducationSection() {
   const education = useEducation();
 
   return (
-    <section
-      aria-label="Education"
-      className="scroll-mt-16 py-16"
-      data-section="education"
-    >
-      <SectionState skeleton={<EducationSkeleton />} state={education}>
-        {(record) => (
-          <div className="space-y-6">
-            <h2
-              className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
-              id="education"
-            >
-              Education
-            </h2>
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold tracking-tight">
-                {record.degree}
-              </h3>
-              <p className="leading-relaxed">{record.field}</p>
-              <p className="leading-relaxed">{record.institution}</p>
-              <p className="text-sm text-muted-foreground">
-                {record.location}
-                {record.dateRange ? ` · ${record.dateRange}` : ""}
-              </p>
+    <SectionReveal data-section="education">
+      <section aria-label="Education" className="scroll-mt-16 py-16">
+        <SectionState skeleton={<EducationSkeleton />} state={education}>
+          {(record) => (
+            <div className="space-y-6">
+              <h2
+                className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
+                id="education"
+              >
+                Education
+              </h2>
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold tracking-tight">
+                  {record.degree}
+                </h3>
+                <p className="leading-relaxed">{record.field}</p>
+                <p className="leading-relaxed">{record.institution}</p>
+                <p className="text-sm text-muted-foreground">
+                  {record.location}
+                  {record.dateRange ? ` · ${record.dateRange}` : ""}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
-      </SectionState>
-    </section>
+          )}
+        </SectionState>
+      </section>
+    </SectionReveal>
   );
 }
 

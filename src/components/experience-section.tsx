@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useExperience } from "../data/experience-view";
+import { SectionReveal } from "./section-reveal";
 import { SectionState } from "./section-state";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardHeader } from "./ui/card";
@@ -13,7 +14,7 @@ export function ExperienceSection({
   const experience = useExperience();
 
   return (
-    <div
+    <SectionReveal
       className="scroll-mt-16 py-16"
       data-section="experience"
       id="experience"
@@ -119,7 +120,7 @@ export function ExperienceSection({
           </section>
         )}
       </SectionState>
-    </div>
+    </SectionReveal>
   );
 }
 
