@@ -156,6 +156,7 @@ describe("Experience view", () => {
               alt: "Second project placeholder",
             },
           ],
+          parts: [],
         },
         {
           id: "first-project",
@@ -165,6 +166,7 @@ describe("Experience view", () => {
           description: "First description.",
           skillIds: ["typescript"],
           images: [],
+          parts: [],
         },
         {
           id: "client-project",
@@ -175,6 +177,7 @@ describe("Experience view", () => {
           skillIds: ["ky"],
           clientName: "Client Name",
           images: [],
+          parts: [],
         },
       ],
       [
@@ -222,6 +225,223 @@ describe("Experience view", () => {
           thumbnail: undefined,
         },
       ]);
+    }
+  });
+
+  it("combines Project and Part Skills once in first-seen order", async () => {
+    const module = createModule(
+      engagements,
+      [
+        {
+          id: "parts-project",
+          engagementId: "urapp",
+          name: "Parts Project",
+          summary: "A Project with separate Parts.",
+          description: "Project description.",
+          skillIds: ["typescript", "docker"],
+          images: [],
+          parts: [
+            {
+              id: "api",
+              name: "API",
+              summary: "Fastify API.",
+              description: "API description.",
+              skillIds: ["fastify", "typescript"],
+              images: [],
+            },
+            {
+              id: "admin-console",
+              name: "Admin Console",
+              summary: "React admin console.",
+              description: "Admin description.",
+              skillIds: ["react", "playwright"],
+              images: [],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          id: "typescript",
+          name: "TypeScript",
+          categoryId: "language",
+          listed: true,
+        },
+        { id: "docker", name: "Docker", categoryId: "tools", listed: true },
+        { id: "fastify", name: "Fastify", categoryId: "backend", listed: true },
+        { id: "react", name: "React", categoryId: "frontend", listed: true },
+        {
+          id: "playwright",
+          name: "Playwright",
+          categoryId: "testing",
+          listed: true,
+        },
+      ],
+    );
+
+    const view = await module.getExperience();
+
+    expect(view.status).toBe("ready");
+    if (view.status === "ready") {
+      expect(view.data[0].projects[0].skills).toEqual([
+        "TypeScript",
+        "Docker",
+        "Fastify",
+        "React",
+        "Playwright",
+      ]);
+    }
+  });
+
+  it("uses the first Part Image as a thumbnail when the Project has none", async () => {
+    const module = createModule(engagements, [
+      {
+        id: "parts-project",
+        engagementId: "urapp",
+        name: "Parts Project",
+        summary: "A Project with separate Parts.",
+        description: "Project description.",
+        skillIds: [],
+        images: [],
+        parts: [
+          {
+            id: "api",
+            name: "API",
+            summary: "API summary.",
+            description: "API description.",
+            skillIds: [],
+            images: [],
+          },
+          {
+            id: "admin-console",
+            name: "Admin Console",
+            summary: "Admin summary.",
+            description: "Admin description.",
+            skillIds: [],
+            images: [
+              {
+                src: "images/gripsun/admin-console/admin.svg",
+                alt: "Admin Console placeholder",
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const view = await module.getExperience();
+
+    expect(view.status).toBe("ready");
+    if (view.status === "ready") {
+      expect(view.data[0].projects[0].thumbnail).toEqual({
+        src: "http://content.test/images/gripsun/admin-console/admin.svg",
+        alt: "Admin Console placeholder",
+      });
+    }
+  });
+
+  it("keeps the Project Image ahead of Part Images and has no thumbnail when neither has one", async () => {
+    const module = createModule(engagements, [
+      {
+        id: "project-image-first",
+        engagementId: "urapp",
+        name: "Project Image First",
+        summary: "Project image takes precedence.",
+        description: "Project description.",
+        skillIds: [],
+        images: [{ src: "images/project.svg", alt: "Project placeholder" }],
+        parts: [
+          {
+            id: "mobile-app",
+            name: "Mobile App",
+            summary: "Mobile summary.",
+            description: "Mobile description.",
+            skillIds: [],
+            images: [{ src: "images/part.svg", alt: "Part placeholder" }],
+          },
+        ],
+      },
+      {
+        id: "no-image",
+        engagementId: "urapp",
+        name: "No Image",
+        summary: "No images.",
+        description: "Description.",
+        skillIds: [],
+        images: [],
+        parts: [
+          {
+            id: "api",
+            name: "API",
+            summary: "API summary.",
+            description: "API description.",
+            skillIds: [],
+            images: [],
+          },
+        ],
+      },
+    ]);
+
+    const view = await module.getExperience();
+
+    expect(view.status).toBe("ready");
+    if (view.status === "ready") {
+      expect(view.data[0].projects[0].thumbnail).toEqual({
+        src: "http://content.test/images/project.svg",
+        alt: "Project placeholder",
+      });
+      expect(view.data[0].projects[1].thumbnail).toBeUndefined();
+    }
+  });
+
+  it("requires a Description when a Project has no Parts", async () => {
+    const module = createModule(engagements, [
+      {
+        id: "missing-description",
+        engagementId: "urapp",
+        name: "Missing Description",
+        summary: "Summary.",
+        skillIds: [],
+        images: [],
+        parts: [],
+      },
+    ]);
+
+    await expect(module.getExperience()).resolves.toMatchObject({
+      status: "error",
+      message: GENERIC_CONTENT_ERROR_MESSAGE,
+    });
+  });
+
+  it("accepts a Project without a Description when it has Parts", async () => {
+    const module = createModule(engagements, [
+      {
+        id: "parts-only-description",
+        engagementId: "urapp",
+        name: "Parts Only Description",
+        summary: "Summary.",
+        skillIds: [],
+        images: [],
+        parts: [
+          {
+            id: "api",
+            name: "API",
+            summary: "API summary.",
+            description: "API description.",
+            skillIds: [],
+            images: [],
+          },
+        ],
+      },
+    ]);
+
+    const view = await module.getExperience();
+
+    expect(view.status).toBe("ready");
+    if (view.status === "ready") {
+      expect(view.data[0].projects).toContainEqual(
+        expect.objectContaining({ name: "Parts Only Description" }),
+      );
     }
   });
 });

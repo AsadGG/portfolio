@@ -101,18 +101,36 @@ export const imageSchema = z.object({
 
 export type ProjectImage = z.infer<typeof imageSchema>;
 
+export const partSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    name: z.string().min(1),
+    summary: z.string().min(1),
+    description: z.string().min(1),
+    skillIds: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
+    images: z.array(imageSchema),
+  })
+  .strict();
+
+export type ProjectPart = z.infer<typeof partSchema>;
+
 export const projectSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     engagementId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
     name: z.string().min(1),
     summary: z.string().min(1),
-    description: z.string().min(1),
+    description: z.string().min(1).optional(),
     skillIds: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
     images: z.array(imageSchema),
+    parts: z.array(partSchema),
     clientName: z.string().min(1).optional(),
   })
-  .strict();
+  .strict()
+  .refine((project) => project.parts.length > 0 || project.description, {
+    message: "A Project without Parts must have a Description.",
+    path: ["description"],
+  });
 
 export type Project = z.infer<typeof projectSchema>;
 const storedProjectSchema = projectSchema.extend({
@@ -478,12 +496,20 @@ export function createDataModule(options: DataModuleOptions) {
     );
     return projects.map((project, documentOrder) => ({
       ...project,
-      images: project.images.map((image) => ({
-        ...image,
-        src: new URL(image.src, contentBaseUrl).toString(),
+      images: project.images.map(resolveImageUrl),
+      parts: project.parts.map((part) => ({
+        ...part,
+        images: part.images.map(resolveImageUrl),
       })),
       documentOrder,
     }));
+  }
+
+  function resolveImageUrl(image: ProjectImage): ProjectImage {
+    return {
+      ...image,
+      src: new URL(image.src, contentBaseUrl).toString(),
+    };
   }
 
   async function fetchEducationDocument() {
@@ -888,16 +914,26 @@ export function buildExperienceView(
           (left, right) =>
             left.project.documentOrder - right.project.documentOrder,
         )
-        .map(({ project }) => ({
-          id: project.id,
-          name: project.name,
-          summary: project.summary,
-          ...(project.clientName ? { clientName: project.clientName } : {}),
-          ...(project.images[0] ? { thumbnail: project.images[0] } : {}),
-          skills: project.skillIds.flatMap((id) => {
-            const skill = skillsById.get(id);
-            return skill ? [skill.name] : [];
-          }),
-        })),
+        .map(({ project }) => {
+          const thumbnail =
+            project.images[0] ??
+            project.parts.find((part) => part.images.length > 0)?.images[0];
+          const skillIds = new Set([
+            ...project.skillIds,
+            ...project.parts.flatMap((part) => part.skillIds),
+          ]);
+
+          return {
+            id: project.id,
+            name: project.name,
+            summary: project.summary,
+            ...(project.clientName ? { clientName: project.clientName } : {}),
+            ...(thumbnail ? { thumbnail } : {}),
+            skills: [...skillIds].flatMap((id) => {
+              const skill = skillsById.get(id);
+              return skill ? [skill.name] : [];
+            }),
+          };
+        }),
     }));
 }

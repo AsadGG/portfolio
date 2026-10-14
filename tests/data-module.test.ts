@@ -81,6 +81,7 @@ describe("content document transport", () => {
           description: "Description",
           skillIds: [],
           images: [{ src: "images/project.svg", alt: "  " }],
+          parts: [],
         },
       ],
       pagination: {

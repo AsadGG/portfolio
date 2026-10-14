@@ -114,6 +114,40 @@ test("Project cards show their first Image or a no-image placeholder", async ({
   await expect(placeholder).toContainText("Crypto-Mining Platform");
 });
 
+test("Gripsun card combines Part Skills and falls back to the Admin Console Image", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const experience = page.locator("#experience");
+  const gripsunCard = experience
+    .getByRole("heading", { level: 4, name: "Gripsun Privilege Club" })
+    .locator("xpath=../..");
+  const skills = gripsunCard.getByRole("list", {
+    name: "Skills used in Gripsun Privilege Club",
+  });
+
+  await expect(skills.getByText("Fastify", { exact: true })).toBeVisible();
+  await expect(skills.getByText("Playwright", { exact: true })).toBeVisible();
+  await expect(skills.getByText("Expo", { exact: true })).toBeVisible();
+
+  const thumbnail = gripsunCard.getByRole("img");
+  await expect(thumbnail).toHaveAttribute(
+    "alt",
+    "Placeholder image for the Gripsun Admin Console claims view",
+  );
+  await expect(thumbnail).toHaveAttribute(
+    "src",
+    /images\/gripsun\/admin-console\/claims\.svg$/,
+  );
+  await thumbnail.scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      thumbnail.evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+});
+
 test("Experience can retry a failed Project document without showing Retry elsewhere", async ({
   page,
 }) => {
