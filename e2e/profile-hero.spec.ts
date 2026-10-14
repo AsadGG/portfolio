@@ -6,15 +6,16 @@ test("Profile hero shows its content and safe contact links", async ({
 }) => {
   await page.goto("/");
   const main = page.getByRole("main");
+  const profile = main.getByRole("region", { name: "Asad Ur Rahman" });
 
   await expect(
-    main.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
+    profile.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
   ).toBeVisible();
   await expect(
-    main.getByText("Senior Full-Stack Software Engineer"),
+    profile.getByText("Senior Full-Stack Software Engineer"),
   ).toBeVisible();
   await expect(
-    main.getByText("Karachi, Pakistan", { exact: true }),
+    profile.getByText("Karachi, Pakistan", { exact: true }),
   ).toBeVisible();
   await expect(page).toHaveTitle(
     "Asad Ur Rahman — Senior Full-Stack Software Engineer",

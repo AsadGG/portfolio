@@ -1,0 +1,10 @@
+{
+  "statusCode": 200,
+  "message": "Education loaded",
+  "data": {
+    "institution": "Umaer Basha Institute of Information Technology (UBIT), University of Karachi",
+    "degree": "Bachelor of Science (BS)",
+    "field": "Computer Software Engineering",
+    "location": "Karachi, Pakistan"
+  }
+}

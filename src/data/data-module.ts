@@ -12,6 +12,7 @@ export const HIGHLIGHTS_COLLECTION_KEY = "highlights";
 export const SKILL_CATEGORIES_COLLECTION_KEY = "skill-categories";
 export const SKILLS_COLLECTION_KEY = "skills";
 export const ENGAGEMENTS_COLLECTION_KEY = "engagements";
+export const EDUCATION_COLLECTION_KEY = "education";
 
 export const profileSchema = z.object({
   name: z.string().min(1),
@@ -90,6 +91,18 @@ export type Engagement = z.infer<typeof engagementSchema>;
 const storedEngagementSchema = engagementSchema.and(
   z.object({ documentOrder: z.number().int() }),
 );
+
+export const educationSchema = z.object({
+  institution: z.string().min(1),
+  degree: z.string().min(1),
+  field: z.string().min(1),
+  location: z.string().min(1),
+  startYear: z.number().int().optional(),
+  endYear: z.number().int().optional(),
+});
+
+export type Education = z.infer<typeof educationSchema>;
+export type EducationSectionData = Education & { dateRange?: string };
 
 export type ExperienceEngagement = {
   id: string;
@@ -289,6 +302,21 @@ export function createDataModule(options: DataModuleOptions) {
       schema: storedEngagementSchema,
     }),
   );
+  const educationCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [EDUCATION_COLLECTION_KEY],
+      queryFn: async () => [await fetchEducationDocument()],
+      getKey: () => EDUCATION_COLLECTION_KEY,
+      queryClient,
+      retry: retryCount,
+      schema: educationSchema,
+    }),
+  );
+  const educationView = createLiveQueryCollection((query) =>
+    query
+      .from({ education: educationCollection })
+      .select(({ education }) => education),
+  );
   const engagementsView = createLiveQueryCollection((query) =>
     query
       .from({ engagement: engagementsCollection })
@@ -372,6 +400,15 @@ export function createDataModule(options: DataModuleOptions) {
     }));
   }
 
+  async function fetchEducationDocument() {
+    const envelopeSchema = itemEnvelopeSchema(educationSchema);
+    return fetchDocument<Education>(
+      "education.json",
+      (value) =>
+        envelopeSchema.parse(value) as { statusCode: number; data: unknown },
+    );
+  }
+
   async function getExperience() {
     const retry = async () => {
       await engagementsCollection.utils.refetch({ throwOnError: true });
@@ -392,6 +429,32 @@ export function createDataModule(options: DataModuleOptions) {
             ? error.message
             : engagementsCollection.utils.lastError instanceof ContentError
               ? engagementsCollection.utils.lastError.message
+              : GENERIC_CONTENT_ERROR_MESSAGE,
+        retry,
+      };
+    }
+  }
+
+  async function getEducation() {
+    const retry = async () => {
+      await educationCollection.utils.refetch({ throwOnError: true });
+    };
+
+    try {
+      const [data] = await educationView.toArrayWhenReady();
+      return {
+        status: "ready" as const,
+        data: buildEducationView(data),
+        retry,
+      };
+    } catch (error) {
+      return {
+        status: "error" as const,
+        message:
+          error instanceof ContentError
+            ? error.message
+            : educationCollection.utils.lastError instanceof ContentError
+              ? educationCollection.utils.lastError.message
               : GENERIC_CONTENT_ERROR_MESSAGE,
         retry,
       };
@@ -594,6 +657,9 @@ export function createDataModule(options: DataModuleOptions) {
     engagementsView,
     experienceView,
     getExperience,
+    educationCollection,
+    educationView,
+    getEducation,
     fetchItemDocument<T extends z.ZodType>(path: string, recordSchema: T) {
       const envelopeSchema = itemEnvelopeSchema(recordSchema);
       return fetchDocument<z.output<T>>(
@@ -611,6 +677,18 @@ export function createDataModule(options: DataModuleOptions) {
       );
     },
   };
+}
+
+export function buildEducationView(education: Education): EducationSectionData {
+  const dateRange =
+    education.startYear !== undefined && education.endYear !== undefined
+      ? `${education.startYear} – ${education.endYear}`
+      : education.endYear !== undefined
+        ? String(education.endYear)
+        : education.startYear !== undefined
+          ? `${education.startYear} – Present`
+          : undefined;
+  return { ...education, ...(dateRange ? { dateRange } : {}) };
 }
 
 export function resolveIntroText(

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ContactLinks } from "../components/contact-links";
+import { EducationSection } from "../components/education-section";
 import { ExperienceSection } from "../components/experience-section";
 import { Footer } from "../components/footer";
 import { HighlightsSection } from "../components/highlights-section";
@@ -53,6 +54,7 @@ function Home() {
         <HighlightsSection />
         <SkillsSection />
         <ExperienceSection />
+        <EducationSection />
       </main>
       <Footer />
     </>
