@@ -13,7 +13,9 @@ test("Profile hero shows its content and safe contact links", async ({
   await expect(
     main.getByText("Senior Full-Stack Software Engineer"),
   ).toBeVisible();
-  await expect(main.getByText("Karachi, Pakistan")).toBeVisible();
+  await expect(
+    main.getByText("Karachi, Pakistan", { exact: true }),
+  ).toBeVisible();
   await expect(page).toHaveTitle(
     "Asad Ur Rahman — Senior Full-Stack Software Engineer",
   );

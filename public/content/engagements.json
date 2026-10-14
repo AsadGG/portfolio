@@ -1,0 +1,36 @@
+{
+  "statusCode": 200,
+  "message": "Engagements loaded successfully.",
+  "data": [
+    {
+      "id": "urapp",
+      "kind": "employment",
+      "companyName": "UrApp Technologies",
+      "start": "2024-01",
+      "location": "Karachi, Pakistan",
+      "summary": "Coordinates API integration work for junior frontend developers and designs reusable authentication and RBAC modules used across several backend projects."
+    },
+    {
+      "id": "2cimple",
+      "kind": "employment",
+      "companyName": "2Cimple",
+      "start": "2021-12",
+      "end": "2024-01",
+      "summary": "Developed production web applications with React and Angular."
+    },
+    {
+      "id": "freelance",
+      "kind": "freelance",
+      "start": "2026-07",
+      "location": "Remote"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "lastPage": 1,
+    "nextPage": null,
+    "pageSize": 3,
+    "previousPage": null,
+    "total": 3
+  }
+}

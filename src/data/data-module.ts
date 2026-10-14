@@ -11,6 +11,7 @@ export const PROFILE_COLLECTION_KEY = "profile";
 export const HIGHLIGHTS_COLLECTION_KEY = "highlights";
 export const SKILL_CATEGORIES_COLLECTION_KEY = "skill-categories";
 export const SKILLS_COLLECTION_KEY = "skills";
+export const ENGAGEMENTS_COLLECTION_KEY = "engagements";
 
 export const profileSchema = z.object({
   name: z.string().min(1),
@@ -57,6 +58,46 @@ export type Skill = z.infer<typeof skillSchema>;
 const storedSkillSchema = skillSchema.extend({
   documentOrder: z.number().int(),
 });
+
+const engagementFields = {
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  start: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  end: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+    .optional(),
+  location: z.string().min(1).optional(),
+  summary: z.string().min(1).optional(),
+};
+
+export const engagementSchema = z.discriminatedUnion("kind", [
+  z
+    .object({
+      ...engagementFields,
+      kind: z.literal("employment"),
+      companyName: z.string().min(1),
+    })
+    .strict(),
+  z
+    .object({
+      ...engagementFields,
+      kind: z.literal("freelance"),
+    })
+    .strict(),
+]);
+
+export type Engagement = z.infer<typeof engagementSchema>;
+const storedEngagementSchema = engagementSchema.and(
+  z.object({ documentOrder: z.number().int() }),
+);
+
+export type ExperienceEngagement = {
+  id: string;
+  heading: string;
+  dateRange: string;
+  location?: string;
+  summary?: string;
+};
 
 export type SkillGroup = SkillCategory & { skills: Skill[] };
 
@@ -236,6 +277,21 @@ export function createDataModule(options: DataModuleOptions) {
       schema: storedSkillSchema,
     }),
   );
+  const engagementsCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [ENGAGEMENTS_COLLECTION_KEY],
+      queryFn: fetchEngagementsDocument,
+      getKey: (engagement) => engagement.id,
+      queryClient,
+      retry: retryCount,
+      schema: storedEngagementSchema,
+    }),
+  );
+  const experienceView = createLiveQueryCollection((query) =>
+    query
+      .from({ engagement: engagementsCollection })
+      .select(({ engagement }) => engagement),
+  );
   skillsCollection.createIndex((skill) => skill.categoryId, {
     indexType: BasicIndex,
   });
@@ -296,6 +352,47 @@ export function createDataModule(options: DataModuleOptions) {
         },
     );
     return skills.map((skill, documentOrder) => ({ ...skill, documentOrder }));
+  }
+
+  async function fetchEngagementsDocument() {
+    const engagements = await fetchDocument<Engagement[]>(
+      "engagements.json",
+      (value) =>
+        listEnvelopeSchema(engagementSchema).parse(value) as {
+          statusCode: number;
+          data: unknown;
+        },
+    );
+    return engagements.map((engagement, documentOrder) => ({
+      ...engagement,
+      documentOrder,
+    }));
+  }
+
+  async function getExperience() {
+    const retry = async () => {
+      await engagementsCollection.utils.refetch({ throwOnError: true });
+    };
+
+    try {
+      const rows = await experienceView.toArrayWhenReady();
+      return {
+        status: "ready" as const,
+        data: buildExperienceView(rows),
+        retry,
+      };
+    } catch (error) {
+      return {
+        status: "error" as const,
+        message:
+          error instanceof ContentError
+            ? error.message
+            : engagementsCollection.utils.lastError instanceof ContentError
+              ? engagementsCollection.utils.lastError.message
+              : GENERIC_CONTENT_ERROR_MESSAGE,
+        retry,
+      };
+    }
   }
 
   async function getProfile() {
@@ -427,6 +524,9 @@ export function createDataModule(options: DataModuleOptions) {
     skillsSectionView,
     getSkillsSection,
     retrySkillsSection,
+    engagementsCollection,
+    experienceView,
+    getExperience,
     fetchItemDocument<T extends z.ZodType>(path: string, recordSchema: T) {
       const envelopeSchema = itemEnvelopeSchema(recordSchema);
       return fetchDocument<z.output<T>>(
@@ -444,4 +544,47 @@ export function createDataModule(options: DataModuleOptions) {
       );
     },
   };
+}
+
+const monthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function formatYearMonth(value: string) {
+  const [year, month] = value.split("-");
+  return `${monthNames[Number(month) - 1]} ${year}`;
+}
+
+export function buildExperienceView(
+  engagements: Array<Engagement & { documentOrder: number }>,
+): ExperienceEngagement[] {
+  return [...engagements]
+    .sort((left, right) => {
+      if (left.kind !== right.kind) return left.kind === "freelance" ? 1 : -1;
+      if (left.kind === "freelance")
+        return left.documentOrder - right.documentOrder;
+      return (
+        right.start.localeCompare(left.start) ||
+        left.documentOrder - right.documentOrder
+      );
+    })
+    .map((engagement) => ({
+      id: engagement.id,
+      heading:
+        engagement.kind === "employment" ? engagement.companyName : "Freelance",
+      dateRange: `${formatYearMonth(engagement.start)} – ${engagement.end ? formatYearMonth(engagement.end) : "Present"}`,
+      ...(engagement.location ? { location: engagement.location } : {}),
+      ...(engagement.summary ? { summary: engagement.summary } : {}),
+    }));
 }
