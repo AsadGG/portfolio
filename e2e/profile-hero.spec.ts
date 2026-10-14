@@ -1,46 +1,24 @@
 import { expect, test } from "@playwright/test";
+import { expectContactLinks } from "./contact-links";
 
 test("Profile hero shows its content and safe contact links", async ({
   page,
 }) => {
   await page.goto("/");
+  const main = page.getByRole("main");
 
   await expect(
-    page.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
+    main.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
   ).toBeVisible();
   await expect(
-    page.getByText("Senior Full-Stack Software Engineer"),
+    main.getByText("Senior Full-Stack Software Engineer"),
   ).toBeVisible();
-  await expect(page.getByText("Karachi, Pakistan")).toBeVisible();
+  await expect(main.getByText("Karachi, Pakistan")).toBeVisible();
   await expect(page).toHaveTitle(
     "Asad Ur Rahman — Senior Full-Stack Software Engineer",
   );
 
-  await expect(page.getByRole("link", { name: "Email" })).toHaveAttribute(
-    "href",
-    "mailto:asadxero@gmail.com",
-  );
-  await expect(
-    page.getByRole("link", { name: "+92 310 2167445" }),
-  ).toHaveAttribute("href", "tel:+923102167445");
-
-  for (const [name, href] of [
-    ["GitHub", "https://github.com/AsadGG"],
-    ["LinkedIn", "https://www.linkedin.com/in/asad-ur-rahman-20608a272"],
-  ]) {
-    await expect(page.getByRole("link", { name })).toHaveAttribute(
-      "href",
-      href,
-    );
-    await expect(page.getByRole("link", { name })).toHaveAttribute(
-      "target",
-      "_blank",
-    );
-    await expect(page.getByRole("link", { name })).toHaveAttribute(
-      "rel",
-      "noopener noreferrer",
-    );
-  }
+  await expectContactLinks(main);
 });
 
 test("Profile hero can retry after the Profile document fails", async ({
@@ -67,10 +45,11 @@ test("Profile hero can retry after the Profile document fails", async ({
   });
 
   await page.goto("/");
+  const main = page.getByRole("main");
   await expect(
-    page.getByText("Profile is temporarily unavailable."),
+    main.getByText("Profile is temporarily unavailable."),
   ).toBeVisible();
-  const retry = page.getByRole("button", { name: "Retry" });
+  const retry = main.getByRole("button", { name: "Retry" });
   await expect(retry).toBeVisible();
   expect(attempts).toBe(2);
 
@@ -78,7 +57,7 @@ test("Profile hero can retry after the Profile document fails", async ({
   await retry.focus();
   await page.keyboard.press("Enter");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
+    main.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
   ).toBeVisible();
 });
 
@@ -92,9 +71,11 @@ test("Profile hero shows a skeleton while the Profile document is delayed", asyn
 
   await page.goto("/");
   await expect(
-    page.getByRole("status", { name: "Loading Profile" }),
+    page.getByRole("main").getByRole("status", { name: "Loading Profile" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
+    page
+      .getByRole("main")
+      .getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
   ).toBeVisible();
 });

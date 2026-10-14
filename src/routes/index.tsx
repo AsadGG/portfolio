@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { ContactLinks } from "../components/contact-links";
+import { Footer } from "../components/footer";
 import { SectionState } from "../components/section-state";
 import { Skeleton } from "../components/ui/skeleton";
 import { useProfile } from "../data/profile-view";
@@ -19,41 +21,33 @@ function Home() {
   }, [profile]);
 
   return (
-    <main className="mx-auto w-[min(1080px,calc(100%-2rem))]">
-      <SectionState skeleton={<ProfileSkeleton />} state={profile}>
-        {(data) => (
-          <section aria-labelledby="profile-name" className={heroClassName}>
-            <h1
-              className="text-[clamp(3rem,10vw,6.5rem)] leading-[0.98] tracking-[-0.06em]"
-              id="profile-name"
-            >
-              {data.name}
-            </h1>
-            <p className="text-[clamp(1rem,2.5vw,1.25rem)] text-muted-foreground">
-              {data.headline}
-            </p>
-            <p className="text-[clamp(1rem,2.5vw,1.25rem)] text-muted-foreground">
-              {data.location}
-            </p>
-            <nav
-              aria-label="Contact links"
-              className="mt-3 flex flex-wrap gap-x-6 gap-y-3"
-            >
-              <a href={`mailto:${data.email}`}>Email</a>
-              <a href={`tel:${data.phone.replace(/[^\d+]/g, "")}`}>
-                {data.phone}
-              </a>
-              <a href={data.github} rel="noopener noreferrer" target="_blank">
-                GitHub
-              </a>
-              <a href={data.linkedin} rel="noopener noreferrer" target="_blank">
-                LinkedIn
-              </a>
-            </nav>
-          </section>
-        )}
-      </SectionState>
-    </main>
+    <>
+      <main className="mx-auto w-[min(1080px,calc(100%-2rem))]">
+        <SectionState skeleton={<ProfileSkeleton />} state={profile}>
+          {(data) => (
+            <section aria-labelledby="profile-name" className={heroClassName}>
+              <h1
+                className="text-[clamp(3rem,10vw,6.5rem)] leading-[0.98] tracking-[-0.06em]"
+                id="profile-name"
+              >
+                {data.name}
+              </h1>
+              <p className="text-[clamp(1rem,2.5vw,1.25rem)] text-muted-foreground">
+                {data.headline}
+              </p>
+              <p className="text-[clamp(1rem,2.5vw,1.25rem)] text-muted-foreground">
+                {data.location}
+              </p>
+              <ContactLinks
+                className="mt-3 flex flex-wrap gap-x-6 gap-y-3"
+                profile={data}
+              />
+            </section>
+          )}
+        </SectionState>
+      </main>
+      <Footer />
+    </>
   );
 }
 
