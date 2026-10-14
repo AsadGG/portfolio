@@ -21,7 +21,18 @@ function envelope(data: unknown) {
   );
 }
 
-function createModule() {
+function createModule(
+  parts: unknown[] = [
+    {
+      id: "mobile",
+      name: "Mobile",
+      summary: "Mobile app.",
+      description: "Raw Part markdown.",
+      skillIds: ["native"],
+      images: [{ src: "images/wedwise/mobile.svg", alt: "Mobile image" }],
+    },
+  ],
+) {
   const documents: Record<string, unknown> = {
     "projects.json": [
       {
@@ -32,16 +43,7 @@ function createModule() {
         description: "Raw **markdown** description.",
         skillIds: ["react"],
         images: [{ src: "images/wedwise/main.svg", alt: "WedWise image" }],
-        parts: [
-          {
-            id: "mobile",
-            name: "Mobile",
-            summary: "Mobile app.",
-            description: "Raw Part markdown.",
-            skillIds: ["native"],
-            images: [{ src: "images/wedwise/mobile.svg", alt: "Mobile image" }],
-          },
-        ],
+        parts,
         role: "Full-stack engineer",
         links: { live: "https://wedwise.example" },
       },
@@ -126,5 +128,68 @@ describe("Project detail view", () => {
     ).resolves.toMatchObject({
       status: "not-found",
     });
+  });
+
+  it("resolves Part Skills and Images in document order", async () => {
+    const view = await createModule([
+      {
+        id: "api",
+        name: "API",
+        summary: "API summary.",
+        description: "API details.",
+        skillIds: ["react"],
+        images: [{ src: "images/api.svg", alt: "API image" }],
+      },
+      {
+        id: "admin-console",
+        name: "Admin Console",
+        summary: "Admin summary.",
+        description: "Admin details.",
+        skillIds: ["native"],
+        images: [{ src: "images/admin.svg", alt: "Admin image" }],
+      },
+      {
+        id: "mobile-app",
+        name: "Mobile App",
+        summary: "Mobile summary.",
+        description: "Mobile details.",
+        skillIds: ["react"],
+        images: [{ src: "images/mobile.svg", alt: "Mobile image" }],
+      },
+    ]).getProjectDetail("wedwise");
+
+    expect(view.status).toBe("ready");
+    if (view.status !== "ready") throw new Error("Expected Project detail");
+    expect(
+      view.data.parts.map(({ id, skills, images }) => ({ id, skills, images })),
+    ).toEqual([
+      {
+        id: "api",
+        skills: ["React"],
+        images: [
+          { src: "https://content.example/images/api.svg", alt: "API image" },
+        ],
+      },
+      {
+        id: "admin-console",
+        skills: ["React Native"],
+        images: [
+          {
+            src: "https://content.example/images/admin.svg",
+            alt: "Admin image",
+          },
+        ],
+      },
+      {
+        id: "mobile-app",
+        skills: ["React"],
+        images: [
+          {
+            src: "https://content.example/images/mobile.svg",
+            alt: "Mobile image",
+          },
+        ],
+      },
+    ]);
   });
 });

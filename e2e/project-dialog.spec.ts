@@ -76,6 +76,70 @@ test("Project cards open a shareable dialog without losing scroll or card focus"
   await expect(card).toBeFocused();
 });
 
+test("Project Parts are browsable in URL-backed tabs", async ({ page }) => {
+  await page.goto("/?project=gripsun");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  const tabs = dialog.getByRole("tablist");
+  await expect(tabs.getByRole("tab")).toHaveText([
+    "API",
+    "Admin Console",
+    "Mobile App",
+  ]);
+  const apiTab = dialog.getByRole("tab", { name: "API" });
+  await expect(apiTab).toHaveAttribute("aria-selected", "true");
+  await expect(
+    dialog.getByText("Fastify, TypeScript, PostgreSQL and Kysely."),
+  ).toBeVisible();
+  await expect(
+    dialog.getByText("Vitest integration tests call the real HTTP routes"),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("list", { name: "Skills used in API" }),
+  ).toContainText("Fastify");
+  await expect(
+    dialog.getByRole("region", { name: "API image gallery" }),
+  ).toHaveCount(0);
+
+  const adminTab = dialog.getByRole("tab", { name: "Admin Console" });
+  await apiTab.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(adminTab).toBeFocused();
+  await dialog.getByRole("tab", { name: "Admin Console" }).click();
+  await expect(page).toHaveURL(/part=admin-console/);
+  await expect(
+    dialog.getByRole("region", { name: "Admin Console image gallery" }),
+  ).toBeVisible();
+  await expect(
+    dialog
+      .getByRole("region", { name: "Admin Console image gallery" })
+      .getByText("1 / 2"),
+  ).toBeVisible();
+  await expect(
+    dialog.getByText("React with TanStack Router and Query."),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("list", { name: "Skills used in Admin Console" }),
+  ).toContainText("React");
+
+  await page.goto("/?project=gripsun&part=mobile-app");
+  await expect(dialog.getByRole("tab", { name: "Mobile App" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(dialog.getByText("React Native with Expo.")).toBeVisible();
+
+  await page.goto("/?project=gripsun&part=nope");
+  await expect(dialog.getByRole("tab", { name: "API" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  await expect(page).toHaveURL(/part=nope/);
+
+  await page.goto("/?project=wedwise");
+  await expect(page.getByRole("dialog").getByRole("tablist")).toHaveCount(0);
+});
+
 test("Project dialog Images can be browsed with buttons and arrow keys", async ({
   page,
 }) => {
@@ -240,7 +304,14 @@ test("Project Description renders raw HTML as literal text and omits missing con
   await page.goto("/?project=gripsun");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByTestId("markdown-content")).toHaveCount(0);
+  await expect(
+    dialog.getByText(/Installers claim fitted units for cashback/),
+  ).toHaveCount(0);
+  await expect(
+    dialog.getByText(
+      "Vitest integration tests call the real HTTP routes against a real PostgreSQL database.",
+    ),
+  ).toBeVisible();
 });
 
 test("raw HTML in a Project Description is displayed literally", async ({

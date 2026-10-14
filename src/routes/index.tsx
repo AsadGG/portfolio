@@ -26,7 +26,7 @@ const heroClassName =
 
 function Home() {
   const profile = useProfile();
-  const { project } = Route.useSearch();
+  const { part, project } = Route.useSearch();
   const navigate = useNavigate({ from: "/" });
   const returnFocus = useRef<HTMLAnchorElement | null>(null);
 
@@ -86,6 +86,14 @@ function Home() {
       <Footer />
       <ProjectDialog
         onClose={closeProject}
+        onPartChange={(partId) =>
+          navigate({
+            search: (previous) => ({ ...previous, part: partId }),
+            replace: true,
+            resetScroll: false,
+          })
+        }
+        partId={part}
         projectId={project}
         returnFocus={returnFocus}
       />

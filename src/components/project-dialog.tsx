@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ProjectDetail } from "../data/data-module";
 import { useDataModule } from "../data/data-module-provider";
-import { ImageGallery } from "./image-gallery";
+import { type GalleryImage, ImageGallery } from "./image-gallery";
 import { Markdown } from "./markdown";
 import { Badge } from "./ui/badge";
 import {
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "./ui/tabs";
 
 type DetailState =
   | { status: "loading"; projectId?: string }
@@ -18,12 +19,36 @@ type DetailState =
   | { status: "error"; projectId: string; message: string }
   | { status: "ready"; projectId: string; data: ProjectDetail };
 
+type ProjectImage = ProjectDetail["images"][number];
+
+function toGalleryImages(images: ProjectImage[]): GalleryImage[] {
+  return images.map(({ src, alt, caption }) => ({ url: src, alt, caption }));
+}
+
+function SkillList({ skills, label }: { skills: string[]; label: string }) {
+  if (skills.length === 0) return null;
+
+  return (
+    <ul aria-label={label} className="flex flex-wrap gap-2">
+      {skills.map((skill) => (
+        <li key={skill}>
+          <Badge variant="secondary">{skill}</Badge>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ProjectDialog({
   projectId,
+  partId,
+  onPartChange,
   onClose,
   returnFocus,
 }: {
   projectId?: string;
+  partId?: string;
+  onPartChange: (partId: string) => void;
   onClose: () => void;
   returnFocus: { current: HTMLAnchorElement | null };
 }) {
@@ -67,7 +92,11 @@ export function ProjectDialog({
         className="max-h-[min(80vh,48rem)] max-w-2xl overflow-y-auto p-8"
       >
         {currentDetail.status === "ready" ? (
-          <ProjectContents project={currentDetail.data} />
+          <ProjectContents
+            onPartChange={onPartChange}
+            partId={partId}
+            project={currentDetail.data}
+          />
         ) : currentDetail.status === "error" ? (
           <p>{currentDetail.message}</p>
         ) : (
@@ -78,7 +107,18 @@ export function ProjectDialog({
   );
 }
 
-function ProjectContents({ project }: { project: ProjectDetail }) {
+function ProjectContents({
+  project,
+  partId,
+  onPartChange,
+}: {
+  project: ProjectDetail;
+  partId?: string;
+  onPartChange: (partId: string) => void;
+}) {
+  const selectedPart =
+    project.parts.find(({ id }) => id === partId) ?? project.parts[0];
+
   return (
     <div className="space-y-5">
       <DialogHeader className="space-y-2 pr-8">
@@ -99,11 +139,7 @@ function ProjectContents({ project }: { project: ProjectDetail }) {
       </DialogHeader>
       <ImageGallery
         key={project.id}
-        images={project.images.map(({ src, alt, caption }) => ({
-          url: src,
-          alt,
-          caption,
-        }))}
+        images={toGalleryImages(project.images)}
         label={project.name}
       />
       {project.description ? <Markdown>{project.description}</Markdown> : null}
@@ -129,18 +165,42 @@ function ProjectContents({ project }: { project: ProjectDetail }) {
           ) : null}
         </nav>
       ) : null}
-      {project.skills.length > 0 ? (
-        <ul
-          aria-label={`Skills used in ${project.name}`}
-          className="flex flex-wrap gap-2"
+      <SkillList
+        label={`Skills used in ${project.name}`}
+        skills={project.skills}
+      />
+      {selectedPart ? (
+        <Tabs
+          onValueChange={(value) => onPartChange(String(value))}
+          value={selectedPart.id}
         >
-          {project.skills.map((skill) => (
-            <li key={skill}>
-              <Badge variant="secondary">{skill}</Badge>
-            </li>
+          <TabsList aria-label={`${project.name} Parts`}>
+            {project.parts.map((part) => (
+              <TabsTab key={part.id} value={part.id}>
+                {part.name}
+              </TabsTab>
+            ))}
+          </TabsList>
+          {project.parts.map((part) => (
+            <TabsPanel key={part.id} value={part.id}>
+              <PartContents part={part} />
+            </TabsPanel>
           ))}
-        </ul>
+        </Tabs>
       ) : null}
     </div>
+  );
+}
+
+function PartContents({ part }: { part: ProjectDetail["parts"][number] }) {
+  return (
+    <section aria-label={part.name} className="space-y-5">
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        {part.summary}
+      </p>
+      {part.description ? <Markdown>{part.description}</Markdown> : null}
+      <SkillList label={`Skills used in ${part.name}`} skills={part.skills} />
+      <ImageGallery images={toGalleryImages(part.images)} label={part.name} />
+    </section>
   );
 }
