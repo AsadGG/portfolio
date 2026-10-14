@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createDataModule,
   GENERIC_CONTENT_ERROR_MESSAGE,
@@ -442,6 +442,73 @@ describe("Experience view", () => {
       expect(view.data[0].projects).toContainEqual(
         expect.objectContaining({ name: "Parts Only Description" }),
       );
+    }
+  });
+
+  it("omits a Project with an unknown Engagement and warns once", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const module = createModule(engagements, [
+        {
+          id: "orphan-project",
+          engagementId: "missing-engagement",
+          name: "Orphan Project",
+          summary: "A Project with a missing Engagement.",
+          description: "Description.",
+          skillIds: [],
+          images: [],
+          parts: [],
+        },
+      ]);
+
+      const first = await module.getExperience();
+      const second = await module.getExperience();
+
+      expect(first.status).toBe("ready");
+      expect(second.status).toBe("ready");
+      if (first.status === "ready") {
+        expect(first.data.flatMap(({ projects }) => projects)).toEqual([]);
+      }
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain("orphan-project");
+      expect(warn.mock.calls[0][0]).toContain("missing-engagement");
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("omits a dangling Skill chip and warns only once for the Project", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const module = createModule(
+        engagements,
+        [
+          {
+            id: "project-with-missing-skill",
+            engagementId: "urapp",
+            name: "Project with missing Skill",
+            summary: "A Project with an unknown Skill.",
+            description: "Description.",
+            skillIds: ["missing-skill"],
+            images: [],
+            parts: [],
+          },
+        ],
+        [],
+      );
+
+      const first = await module.getExperience();
+      const second = await module.getExperience();
+
+      expect(first.status).toBe("ready");
+      expect(second.status).toBe("ready");
+      if (first.status === "ready") {
+        expect(first.data[0].projects[0].skills).toEqual([]);
+      }
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain("missing-skill");
+    } finally {
+      warn.mockRestore();
     }
   });
 });

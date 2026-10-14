@@ -137,6 +137,206 @@ const storedProjectSchema = projectSchema.extend({
   documentOrder: z.number().int(),
 });
 
+export type ReferenceIntegrityContent = {
+  highlights: Highlight[];
+  skillCategories: SkillCategory[];
+  skills: Skill[];
+  engagements: Engagement[];
+  projects: Project[];
+};
+
+export type ReferenceIntegrityProblem = {
+  document: string;
+  recordId: string;
+  rule: string;
+  message: string;
+};
+
+function findProjectReferenceProblems(
+  project: Project,
+  engagementIds: Set<string>,
+  skillIds: Set<string>,
+): ReferenceIntegrityProblem[] {
+  const problems: ReferenceIntegrityProblem[] = [];
+  if (!engagementIds.has(project.engagementId)) {
+    problems.push({
+      document: "projects.json",
+      recordId: project.id,
+      rule: "Project Engagement reference exists",
+      message: `projects.json Project "${project.id}" has engagementId "${project.engagementId}" for a missing Engagement.`,
+    });
+  }
+  for (const skillId of project.skillIds) {
+    if (!skillIds.has(skillId)) {
+      problems.push({
+        document: "projects.json",
+        recordId: project.id,
+        rule: "Project and Part Skill references exist",
+        message: `projects.json Project "${project.id}" refers to missing Skill "${skillId}" in skillIds.`,
+      });
+    }
+  }
+  for (const part of project.parts) {
+    for (const skillId of part.skillIds) {
+      if (!skillIds.has(skillId)) {
+        problems.push({
+          document: "projects.json",
+          recordId: `${project.id}/${part.id}`,
+          rule: "Project and Part Skill references exist",
+          message: `projects.json Part "${part.id}" in Project "${project.id}" refers to missing Skill "${skillId}" in skillIds.`,
+        });
+      }
+    }
+  }
+  return problems;
+}
+
+function findSkillCategoryReferenceProblems(
+  skills: Skill[],
+  categoryIds: Set<string>,
+): ReferenceIntegrityProblem[] {
+  return skills.flatMap((skill) =>
+    categoryIds.has(skill.categoryId)
+      ? []
+      : [
+          {
+            document: "skills.json",
+            recordId: skill.id,
+            rule: "Skill category reference exists",
+            message: `skills.json Skill "${skill.id}" refers to missing Skill Category "${skill.categoryId}" in categoryId.`,
+          },
+        ],
+  );
+}
+
+export function checkReferenceIntegrity(
+  content: ReferenceIntegrityContent,
+): ReferenceIntegrityProblem[] {
+  const problems: ReferenceIntegrityProblem[] = [];
+  const lists: Array<[string, Array<{ id: string }>]> = [
+    ["highlights.json", content.highlights],
+    ["skill-categories.json", content.skillCategories],
+    ["skills.json", content.skills],
+    ["engagements.json", content.engagements],
+    ["projects.json", content.projects],
+  ];
+  for (const [document, records] of lists) {
+    const seen = new Set<string>();
+    for (const { id } of records) {
+      if (seen.has(id)) {
+        problems.push({
+          document,
+          recordId: id,
+          rule: "List document ids are unique",
+          message: `${document} contains duplicate id "${id}".`,
+        });
+      }
+      seen.add(id);
+    }
+  }
+  const engagementIds = new Set(content.engagements.map(({ id }) => id));
+  const engagementsById = new Map(
+    content.engagements.map((engagement) => [engagement.id, engagement]),
+  );
+  const skillIds = new Set(content.skills.map(({ id }) => id));
+  const categoryIds = new Set(content.skillCategories.map(({ id }) => id));
+
+  for (const project of content.projects) {
+    const partIds = new Set<string>();
+    for (const part of project.parts) {
+      if (partIds.has(part.id)) {
+        problems.push({
+          document: "projects.json",
+          recordId: `${project.id}/${part.id}`,
+          rule: "Part ids are unique within a Project",
+          message: `projects.json Project "${project.id}" contains duplicate Part id "${part.id}".`,
+        });
+      }
+      partIds.add(part.id);
+    }
+    problems.push(
+      ...findProjectReferenceProblems(project, engagementIds, skillIds),
+    );
+    if (
+      project.clientName &&
+      engagementsById.get(project.engagementId)?.kind !== "freelance"
+    ) {
+      problems.push({
+        document: "projects.json",
+        recordId: project.id,
+        rule: "Client names belong only to Freelance Projects",
+        message: `projects.json Project "${project.id}" has clientName but its Engagement is not Freelance.`,
+      });
+    }
+    if (project.parts.length === 0 && !project.description) {
+      problems.push({
+        document: "projects.json",
+        recordId: project.id,
+        rule: "Projects without Parts have a Description",
+        message: `projects.json Project "${project.id}" has no Parts and is missing description.`,
+      });
+    }
+  }
+  problems.push(
+    ...findSkillCategoryReferenceProblems(content.skills, categoryIds),
+  );
+  const freelanceEngagements = content.engagements.filter(
+    ({ kind }) => kind === "freelance",
+  );
+  if (freelanceEngagements.length > 1) {
+    for (const engagement of freelanceEngagements.slice(1)) {
+      problems.push({
+        document: "engagements.json",
+        recordId: engagement.id,
+        rule: "At most one Freelance Engagement exists",
+        message: `engagements.json contains more than one Freelance Engagement; "${engagement.id}" is an additional record.`,
+      });
+    }
+  }
+
+  return problems;
+}
+
+function reportDanglingProjectReferences(
+  projects: Array<Project & { documentOrder: number }>,
+  engagementIds: Set<string>,
+  skillIds: Set<string>,
+  warn: (problem: ReferenceIntegrityProblem) => void,
+) {
+  for (const project of projects) {
+    for (const problem of findProjectReferenceProblems(
+      project,
+      engagementIds,
+      skillIds,
+    )) {
+      const skipMessage =
+        problem.rule === "Project Engagement reference exists"
+          ? "the Project is skipped"
+          : "that Skill chip is skipped";
+      warn({
+        ...problem,
+        message: `${problem.message.slice(0, -1)}; ${skipMessage}.`,
+      });
+    }
+  }
+}
+
+function reportDanglingSkillCategories(
+  skills: Array<Skill & { documentOrder: number }>,
+  categoryIds: Set<string>,
+  warn: (problem: ReferenceIntegrityProblem) => void,
+) {
+  for (const problem of findSkillCategoryReferenceProblems(
+    skills,
+    categoryIds,
+  )) {
+    warn({
+      ...problem,
+      message: `${problem.message.slice(0, -1)}; the Skill is skipped.`,
+    });
+  }
+}
+
 export const educationSchema = z.object({
   institution: z.string().min(1),
   degree: z.string().min(1),
@@ -408,6 +608,19 @@ export function createDataModule(options: DataModuleOptions) {
   const experienceSkillsView = createLiveQueryCollection((query) =>
     query.from({ skill: skillsCollection }).select(({ skill }) => skill),
   );
+  const projectsReferenceView = createLiveQueryCollection((query) =>
+    query
+      .from({ project: projectsCollection })
+      .select(({ project }) => project),
+  );
+  const skillCategoriesReferenceView = createLiveQueryCollection((query) =>
+    query
+      .from({ category: skillCategoriesCollection })
+      .select(({ category }) => category),
+  );
+  const skillsReferenceView = createLiveQueryCollection((query) =>
+    query.from({ skill: skillsCollection }).select(({ skill }) => skill),
+  );
   skillsCollection.createIndex((skill) => skill.categoryId, {
     indexType: BasicIndex,
   });
@@ -420,6 +633,13 @@ export function createDataModule(options: DataModuleOptions) {
       .where(({ skill }) => skill === undefined || skill.listed)
       .select(({ category, skill }) => ({ category, skill: skill ?? null })),
   );
+  const reportedReferenceWarnings = new Set<string>();
+
+  function warnOnce(problem: ReferenceIntegrityProblem) {
+    if (reportedReferenceWarnings.has(problem.message)) return;
+    reportedReferenceWarnings.add(problem.message);
+    console.warn(problem.message);
+  }
 
   async function fetchProfileDocument() {
     const envelopeSchema = itemEnvelopeSchema(profileSchema);
@@ -531,10 +751,17 @@ export function createDataModule(options: DataModuleOptions) {
 
   async function getExperience() {
     try {
-      const [rows, skills] = await Promise.all([
+      const [rows, skills, projects] = await Promise.all([
         experienceView.toArrayWhenReady(),
         experienceSkillsView.toArrayWhenReady(),
+        projectsReferenceView.toArrayWhenReady(),
       ]);
+      reportDanglingProjectReferences(
+        projects,
+        new Set(rows.map(({ engagement }) => engagement.id)),
+        new Set(skills.map(({ id }) => id)),
+        warnOnce,
+      );
       return {
         status: "ready" as const,
         data: buildExperienceView(rows, skills),
@@ -694,7 +921,16 @@ export function createDataModule(options: DataModuleOptions) {
 
   async function getSkillsSection() {
     try {
-      const rows = await skillsSectionView.toArrayWhenReady();
+      const [rows, categories, skills] = await Promise.all([
+        skillsSectionView.toArrayWhenReady(),
+        skillCategoriesReferenceView.toArrayWhenReady(),
+        skillsReferenceView.toArrayWhenReady(),
+      ]);
+      reportDanglingSkillCategories(
+        skills,
+        new Set(categories.map(({ id }) => id)),
+        warnOnce,
+      );
       return {
         status: "ready" as const,
         data: groupSkillsSection(rows),

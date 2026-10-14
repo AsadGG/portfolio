@@ -1,5 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createDataModule,
   GENERIC_CONTENT_ERROR_MESSAGE,
@@ -147,5 +147,38 @@ describe("Skills section view", () => {
     });
     expect(calls.get("/skill-categories.json")).toBe(2);
     expect(calls.get("/skills.json")).toBe(2);
+  });
+
+  it("omits a Skill with an unknown category and warns once", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const module = createModule(async (input) => {
+        const path = requestPath(input);
+        return envelope(
+          path.endsWith("skill-categories.json")
+            ? [{ id: "frontend", name: "Frontend" }]
+            : [
+                {
+                  id: "orphan-skill",
+                  name: "Orphan Skill",
+                  categoryId: "missing-category",
+                  listed: true,
+                },
+              ],
+        );
+      });
+
+      const first = await module.getSkillsSection();
+      const second = await module.getSkillsSection();
+
+      expect(first.status).toBe("ready");
+      expect(second.status).toBe("ready");
+      if (first.status === "ready") expect(first.data).toEqual([]);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain("orphan-skill");
+      expect(warn.mock.calls[0][0]).toContain("missing-category");
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
