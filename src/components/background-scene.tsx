@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
   BufferGeometry,
@@ -19,7 +19,12 @@ import {
 import type { SectionId } from "../sections";
 import { SECTION_IDS } from "../sections";
 
-const DEFAULT_PARTICLE_COUNT = 3_200;
+const QUALITY_SETTINGS = {
+  high: { dpr: [1, 2] as [number, number], particleCount: 3_200 },
+  low: { dpr: [1, 1.25] as [number, number], particleCount: 1_000 },
+} as const;
+
+export type BackgroundQuality = keyof typeof QUALITY_SETTINGS;
 const SHAPE_TARGETS: Record<SectionId, ShapeTarget> = {
   hero: {
     morph: 0.08,
@@ -268,17 +273,35 @@ function getAccentColor() {
 }
 
 export default function BackgroundScene({
-  particleCount = DEFAULT_PARTICLE_COUNT,
+  quality,
 }: {
-  particleCount?: number;
+  quality: BackgroundQuality;
 }) {
+  const [frameloop, setFrameloop] = useState<"always" | "never">(() =>
+    document.visibilityState === "hidden" ? "never" : "always",
+  );
+  const settings = QUALITY_SETTINGS[quality];
+
+  useEffect(() => {
+    const updateVisibility = () =>
+      setFrameloop(document.visibilityState === "hidden" ? "never" : "always");
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
   return (
-    <Canvas aria-hidden="true" dpr={1} gl={{ alpha: false, antialias: false }}>
+    <Canvas
+      aria-hidden="true"
+      dpr={settings.dpr}
+      frameloop={frameloop}
+      gl={{ alpha: false, antialias: false }}
+    >
       <color attach="background" args={["#09090b"]} />
       <ambientLight intensity={0.65} />
       <directionalLight intensity={1.2} position={[3, 3, 4]} />
       <HeroShape />
-      <ParticleField count={particleCount} />
+      <ParticleField count={settings.particleCount} />
     </Canvas>
   );
 }

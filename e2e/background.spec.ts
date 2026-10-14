@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 
 function collectConsoleErrors(page: import("@playwright/test").Page) {
   const errors: string[] = [];
@@ -8,6 +8,53 @@ function collectConsoleErrors(page: import("@playwright/test").Page) {
   page.on("pageerror", (error) => errors.push(error.message));
   return errors;
 }
+
+function canvasPixelRatio(canvas: Locator) {
+  return canvas.evaluate((element) => {
+    if (!(element instanceof HTMLCanvasElement)) {
+      throw new Error("The background canvas was not rendered.");
+    }
+    const rect = element.getBoundingClientRect();
+    return element.width / rect.width;
+  });
+}
+
+test.describe("background quality tiers", () => {
+  test.use({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 });
+
+  test("desktop uses high quality and renders at a DPR of 2", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const background = page.locator("[data-background]");
+    await expect(background).toHaveAttribute("data-background", "canvas");
+    await expect(background).toHaveAttribute("data-quality", "high");
+    const canvas = background.locator("canvas");
+    await expect(canvas).toBeAttached();
+    await expect.poll(() => canvasPixelRatio(canvas)).toBe(2);
+  });
+});
+
+test.describe("mobile background quality", () => {
+  test.use({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  });
+
+  test("uses low quality and renders at a DPR of 1.25", async ({ page }) => {
+    await page.goto("/");
+
+    const background = page.locator("[data-background]");
+    await expect(background).toHaveAttribute("data-background", "canvas");
+    await expect(background).toHaveAttribute("data-quality", "low");
+    const canvas = background.locator("canvas");
+    await expect(canvas).toBeAttached();
+    await expect.poll(() => canvasPixelRatio(canvas)).toBeCloseTo(1.25, 1);
+  });
+});
 
 test("the decorative background loads behind content and leaves contact links clickable", async ({
   page,
