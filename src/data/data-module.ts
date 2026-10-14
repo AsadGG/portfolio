@@ -1,8 +1,26 @@
+import { createLiveQueryCollection } from "@tanstack/db";
+import { queryCollectionOptions } from "@tanstack/query-db-collection";
+import { createCollection } from "@tanstack/react-db";
 import type { QueryClient } from "@tanstack/react-query";
 import ky from "ky";
 import { z } from "zod";
 
 export const GENERIC_CONTENT_ERROR_MESSAGE = "Couldn't load this section.";
+
+export const PROFILE_COLLECTION_KEY = "profile";
+
+export const profileSchema = z.object({
+  name: z.string().min(1),
+  headline: z.string().min(1),
+  location: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().min(1),
+  github: z.url(),
+  linkedin: z.url(),
+  intro: z.string().min(1),
+});
+
+export type Profile = z.infer<typeof profileSchema>;
 
 const paginationSchema = z.object({
   currentPage: z.number().int(),
@@ -87,6 +105,38 @@ export function createDataModule(options: DataModuleOptions) {
 
   queryClient.setDefaultOptions({ queries: { retry: retries } });
 
+  const profileCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [PROFILE_COLLECTION_KEY],
+      queryFn: async () => [await fetchProfileDocument()],
+      getKey: () => PROFILE_COLLECTION_KEY,
+      queryClient,
+      retry: retries,
+      schema: profileSchema,
+    }),
+  );
+  const profileView = createLiveQueryCollection((query) =>
+    query.from({ profile: profileCollection }).select(({ profile }) => profile),
+  );
+
+  async function fetchProfileDocument() {
+    const envelopeSchema = itemEnvelopeSchema(profileSchema);
+    return fetchDocument<Profile>(
+      "profile.json",
+      (value) =>
+        envelopeSchema.parse(value) as { statusCode: number; data: unknown },
+    );
+  }
+
+  async function getProfile() {
+    try {
+      const [data] = await profileView.toArrayWhenReady();
+      return { status: "success" as const, data: profileSchema.parse(data) };
+    } catch (error) {
+      return { status: "error" as const, data: undefined, error };
+    }
+  }
+
   async function fetchDocument<T>(
     path: string,
     parseEnvelope: (value: unknown) => { statusCode: number; data: unknown },
@@ -125,6 +175,9 @@ export function createDataModule(options: DataModuleOptions) {
   return {
     queryClient,
     retries,
+    profileCollection,
+    profileView,
+    getProfile,
     fetchItemDocument<T extends z.ZodType>(path: string, recordSchema: T) {
       const envelopeSchema = itemEnvelopeSchema(recordSchema);
       return fetchDocument<z.output<T>>(

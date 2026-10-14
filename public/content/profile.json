@@ -1,0 +1,14 @@
+{
+  "statusCode": 200,
+  "message": "Profile loaded",
+  "data": {
+    "name": "Asad Ur Rahman",
+    "headline": "Senior Full-Stack Software Engineer",
+    "location": "Karachi, Pakistan",
+    "email": "asadxero@gmail.com",
+    "phone": "+92 310 2167445",
+    "github": "https://github.com/AsadGG",
+    "linkedin": "https://www.linkedin.com/in/asad-ur-rahman-20608a272",
+    "intro": "Full-Stack Software Engineer with {years}+ years of experience developing and maintaining production web, mobile, and backend applications. Experienced in TypeScript, JavaScript, React, Angular, React Native, Ionic, Node.js, Fastify, and PostgreSQL. Delivers end-to-end features across user interfaces, REST APIs, authentication, role-based access control, database workflows, and multi-tenant platforms."
+  }
+}
