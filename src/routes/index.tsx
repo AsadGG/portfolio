@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { z } from "zod";
+import { ActiveSectionTracker } from "../components/active-section-tracker";
 import { ContactLinks } from "../components/contact-links";
 import { EducationSection } from "../components/education-section";
 import { ExperienceSection } from "../components/experience-section";
@@ -52,10 +53,16 @@ function Home() {
   return (
     <>
       <StickyHeader />
+      <ActiveSectionTracker />
       <main className="mx-auto w-[min(1080px,calc(100%-2rem))]">
         <SectionState skeleton={<ProfileSkeleton />} state={profile}>
           {(data) => (
-            <section aria-labelledby="profile-name" className={heroClassName}>
+            <section
+              aria-labelledby="profile-name"
+              className={heroClassName}
+              data-section="hero"
+              id="hero"
+            >
               <h1
                 className="text-[clamp(3rem,10vw,6.5rem)] leading-[0.98] tracking-[-0.06em]"
                 id="profile-name"

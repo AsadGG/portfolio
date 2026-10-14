@@ -6,7 +6,7 @@ export function IntroSection() {
   const intro = useIntro();
 
   return (
-    <div className="py-16" data-section="about">
+    <div className="scroll-mt-16 py-16" data-section="about">
       <SectionState skeleton={<IntroSkeleton />} state={intro}>
         {(text) => (
           <section aria-labelledby="about" className="space-y-6">

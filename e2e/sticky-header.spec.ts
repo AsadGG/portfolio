@@ -44,6 +44,24 @@ test("section navigation stays visible and keeps headings clear of the header", 
     .toBe(0);
 });
 
+test("the header tracks the section in the reading band", async ({ page }) => {
+  await page.goto("/");
+
+  const navigation = page.getByRole("navigation", { name: "Sections" });
+  const currentLinks = navigation.locator('[aria-current="true"]');
+  await expect(currentLinks).toHaveCount(0);
+
+  await navigation.getByRole("button", { name: "Skills" }).click();
+  const skills = navigation.getByRole("button", { name: "Skills" });
+  await expect(skills).toHaveAttribute("aria-current", "true");
+  await expect(currentLinks).toHaveCount(1);
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const education = navigation.getByRole("button", { name: "Education" });
+  await expect(education).toHaveAttribute("aria-current", "true");
+  await expect(currentLinks).toHaveCount(1);
+});
+
 test("section navigation uses a compact menu on narrow screens", async ({
   page,
 }) => {
@@ -66,6 +84,11 @@ test("section navigation uses a compact menu on narrow screens", async ({
   await expect
     .poll(() => page.evaluate(() => window.scrollY))
     .toBeGreaterThan(0);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await menuButton.click();
+  await expect(
+    page.getByRole("menuitem", { name: "Education" }),
+  ).toHaveAttribute("aria-current", "true");
 });
 
 test("section navigation scrolls instantly when reduced motion is requested", async ({

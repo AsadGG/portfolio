@@ -7,7 +7,11 @@ export function HighlightsSection() {
   const highlights = useHighlights();
 
   return (
-    <div className="scroll-mt-16 py-16" id="highlights">
+    <div
+      className="scroll-mt-16 py-16"
+      data-section="highlights"
+      id="highlights"
+    >
       <SectionState skeleton={<HighlightsSkeleton />} state={highlights}>
         {(data) => (
           <section aria-labelledby="highlights-heading" className="space-y-8">

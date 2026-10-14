@@ -7,7 +7,11 @@ export function SkillsSection() {
   const skills = useSkillsSection();
 
   return (
-    <section aria-label="Skills" className="py-16">
+    <section
+      aria-label="Skills"
+      className="scroll-mt-16 py-16"
+      data-section="skills"
+    >
       <SectionState skeleton={<SkillsSkeleton />} state={skills}>
         {(categories) => (
           <div className="space-y-8">
