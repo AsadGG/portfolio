@@ -22,6 +22,11 @@ export const profileSchema = z.object({
 
 export type Profile = z.infer<typeof profileSchema>;
 
+export type ViewState<T> =
+  | { status: "loading"; retry: () => Promise<void> }
+  | { status: "error"; message: string; retry: () => Promise<void> }
+  | { status: "ready"; data: T; retry: () => Promise<void> };
+
 const paginationSchema = z.object({
   currentPage: z.number().int(),
   lastPage: z.number().int(),
@@ -103,7 +108,8 @@ export function createDataModule(options: DataModuleOptions) {
     retry: { limit: 0 },
   });
 
-  queryClient.setDefaultOptions({ queries: { retry: retries } });
+  const retryCount = retries ? 1 : 0;
+  queryClient.setDefaultOptions({ queries: { retry: retryCount } });
 
   const profileCollection = createCollection(
     queryCollectionOptions({
@@ -111,7 +117,7 @@ export function createDataModule(options: DataModuleOptions) {
       queryFn: async () => [await fetchProfileDocument()],
       getKey: () => PROFILE_COLLECTION_KEY,
       queryClient,
-      retry: retries,
+      retry: retryCount,
       schema: profileSchema,
     }),
   );
@@ -129,11 +135,28 @@ export function createDataModule(options: DataModuleOptions) {
   }
 
   async function getProfile() {
+    const retry = async () => {
+      await profileCollection.utils.refetch({ throwOnError: true });
+    };
+
     try {
       const [data] = await profileView.toArrayWhenReady();
-      return { status: "success" as const, data: profileSchema.parse(data) };
+      return {
+        status: "ready" as const,
+        data: profileSchema.parse(data),
+        retry,
+      };
     } catch (error) {
-      return { status: "error" as const, data: undefined, error };
+      return {
+        status: "error" as const,
+        message:
+          error instanceof ContentError
+            ? error.message
+            : profileCollection.utils.lastError instanceof ContentError
+              ? profileCollection.utils.lastError.message
+              : GENERIC_CONTENT_ERROR_MESSAGE,
+        retry,
+      };
     }
   }
 

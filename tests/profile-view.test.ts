@@ -1,6 +1,9 @@
 import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
-import { createDataModule } from "../src/data/data-module";
+import {
+  createDataModule,
+  GENERIC_CONTENT_ERROR_MESSAGE,
+} from "../src/data/data-module";
 
 const profile = {
   name: "Asad Ur Rahman",
@@ -14,35 +17,93 @@ const profile = {
     "Full-Stack Software Engineer with {years}+ years of experience developing and maintaining production web, mobile, and backend applications.",
 };
 
-function createModule(record: unknown) {
+function createModule(fetchImplementation: typeof globalThis.fetch) {
   return createDataModule({
     baseUrl: "http://content.test/",
-    fetch: async () =>
-      new Response(
-        JSON.stringify({ statusCode: 200, message: "Profile", data: record }),
-        { status: 200 },
-      ),
+    fetch: fetchImplementation,
     queryClient: new QueryClient(),
     retries: false,
   });
 }
 
+function profileResponse(record: unknown) {
+  return new Response(
+    JSON.stringify({ statusCode: 200, message: "Profile", data: record }),
+    { status: 200 },
+  );
+}
+
 describe("Profile view", () => {
   it("returns the Profile record from an item document", async () => {
-    const module = createModule(profile);
+    const module = createModule(async () => profileResponse(profile));
 
-    await expect(module.getProfile()).resolves.toEqual({
-      status: "success",
+    await expect(module.getProfile()).resolves.toMatchObject({
+      status: "ready",
       data: profile,
     });
   });
 
-  it("reports an error state when the Profile document is invalid", async () => {
-    const module = createModule({ ...profile, email: 42 });
+  it("shows the generic message when the Profile document fails", async () => {
+    const module = createModule(
+      async () => new Response("not found", { status: 404 }),
+    );
+
+    const state = await module.getProfile();
+    expect(state).toMatchObject({
+      status: "error",
+      message: GENERIC_CONTENT_ERROR_MESSAGE,
+    });
+    expect(state.status).toBe("error");
+    if (state.status === "error") expect(state.retry).toBeTypeOf("function");
+  });
+
+  it("reports a schema-invalid Profile document as an error", async () => {
+    const module = createModule(async () =>
+      profileResponse({ ...profile, email: 42 }),
+    );
 
     await expect(module.getProfile()).resolves.toMatchObject({
       status: "error",
-      data: undefined,
+      message: GENERIC_CONTENT_ERROR_MESSAGE,
+    });
+  });
+
+  it("recovers after retrying a failed Profile fetch", async () => {
+    let fixed = false;
+    const module = createModule(async () =>
+      fixed
+        ? profileResponse(profile)
+        : new Response("unavailable", { status: 503 }),
+    );
+
+    const failed = await module.getProfile();
+    expect(failed.status).toBe("error");
+    fixed = true;
+    if (failed.status === "error") await failed.retry();
+
+    await expect(module.getProfile()).resolves.toMatchObject({
+      status: "ready",
+      data: profile,
+    });
+  });
+
+  it("shows the message from a Profile error envelope", async () => {
+    const module = createModule(
+      async () =>
+        new Response(
+          JSON.stringify({
+            statusCode: 503,
+            message: "Profile service unavailable.",
+            code: "overloaded",
+            requestId: "request-123",
+          }),
+          { status: 503 },
+        ),
+    );
+
+    await expect(module.getProfile()).resolves.toMatchObject({
+      status: "error",
+      message: "Profile service unavailable.",
     });
   });
 });

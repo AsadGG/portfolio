@@ -217,6 +217,83 @@ pre code {
   margin-top: 0.75rem;
 }
 
+.profile-skeleton {
+  gap: 1rem;
+}
+
+.skeleton-line {
+  display: block;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--muted) 75%, transparent),
+    color-mix(in oklab, var(--foreground) 16%, var(--muted)),
+    color-mix(in oklab, var(--muted) 75%, transparent)
+  );
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-name {
+  width: min(36rem, 90%);
+  height: clamp(3rem, 10vw, 6.5rem);
+}
+
+.skeleton-headline {
+  width: min(28rem, 78%);
+}
+
+.skeleton-location {
+  width: min(18rem, 55%);
+}
+
+.skeleton-links {
+  width: min(24rem, 72%);
+  height: 2rem;
+  margin-top: 0.75rem;
+}
+
+.section-error {
+  min-height: 75vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1rem;
+  padding-block: 4rem;
+}
+
+.section-error p {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.section-error button {
+  min-height: 2.5rem;
+  padding-inline: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    background-position-x: -220%;
+  }
+}
+
 .display-title {
   font-family: var(--font-sans);
 }
