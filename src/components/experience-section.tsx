@@ -13,7 +13,7 @@ export function ExperienceSection({
   const experience = useExperience();
 
   return (
-    <div className="py-16" id="experience">
+    <div className="scroll-mt-16 py-16" id="experience">
       <SectionState skeleton={<ExperienceSkeleton />} state={experience}>
         {(engagements) => (
           <section aria-labelledby="experience-heading" className="space-y-8">

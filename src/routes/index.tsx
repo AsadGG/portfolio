@@ -10,6 +10,7 @@ import { IntroSection } from "../components/intro-section";
 import { ProjectDialog } from "../components/project-dialog";
 import { SectionState } from "../components/section-state";
 import { SkillsSection } from "../components/skills-section";
+import { StickyHeader } from "../components/sticky-header";
 import { Skeleton } from "../components/ui/skeleton";
 import { useProfile } from "../data/profile-view";
 
@@ -50,6 +51,7 @@ function Home() {
 
   return (
     <>
+      <StickyHeader />
       <main className="mx-auto w-[min(1080px,calc(100%-2rem))]">
         <SectionState skeleton={<ProfileSkeleton />} state={profile}>
           {(data) => (

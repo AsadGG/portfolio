@@ -12,7 +12,7 @@ export function SkillsSection() {
         {(categories) => (
           <div className="space-y-8">
             <h2
-              className="text-3xl font-semibold tracking-tight sm:text-4xl"
+              className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
               id="skills"
             >
               Skills

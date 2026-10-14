@@ -11,8 +11,8 @@ export function IntroSection() {
         {(text) => (
           <section aria-labelledby="about" className="space-y-6">
             <h2
-              className="text-3xl font-semibold tracking-tight sm:text-4xl"
               id="about"
+              className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
             >
               About
             </h2>

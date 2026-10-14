@@ -6,12 +6,16 @@ export function EducationSection() {
   const education = useEducation();
 
   return (
-    <section aria-label="Education" className="py-16" data-section="education">
+    <section
+      aria-label="Education"
+      className="scroll-mt-16 py-16"
+      data-section="education"
+    >
       <SectionState skeleton={<EducationSkeleton />} state={education}>
         {(record) => (
           <div className="space-y-6">
             <h2
-              className="text-3xl font-semibold tracking-tight sm:text-4xl"
+              className="scroll-mt-16 text-3xl font-semibold tracking-tight sm:text-4xl"
               id="education"
             >
               Education
