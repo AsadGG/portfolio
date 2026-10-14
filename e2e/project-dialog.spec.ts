@@ -5,6 +5,12 @@ type ProjectDescription = {
   description?: string;
 };
 
+type ProjectImage = {
+  src: string;
+  alt: string;
+  caption?: string;
+};
+
 async function interceptProjectDescription(
   page: Page,
   projectId: string,
@@ -19,6 +25,23 @@ async function interceptProjectDescription(
     if (!project) throw new Error(`Project not found: ${projectId}`);
     if (description === undefined) delete project.description;
     else project.description = description;
+    await route.fulfill({ response, body: JSON.stringify(document) });
+  });
+}
+
+async function interceptProjectImages(
+  page: Page,
+  projectId: string,
+  updateImages: (images: ProjectImage[]) => ProjectImage[],
+) {
+  await page.route("**/content/projects.json", async (route) => {
+    const response = await route.fetch();
+    const document = (await response.json()) as {
+      data: Array<{ id: string; images: ProjectImage[] }>;
+    };
+    const project = document.data.find(({ id }) => id === projectId);
+    if (!project) throw new Error(`Project not found: ${projectId}`);
+    project.images = updateImages(project.images);
     await route.fulfill({ response, body: JSON.stringify(document) });
   });
 }
@@ -86,6 +109,68 @@ test("Project dialog Images can be browsed with buttons and arrow keys", async (
   await expect(nextButton).toHaveClass(/focus-visible:ring-2/);
 });
 
+test("an Image opens a full-screen viewer and returns focus to the shared gallery position", async ({
+  page,
+}) => {
+  await interceptProjectImages(page, "wedwise", (images) =>
+    images.map((image, index) =>
+      index === 0 ? { ...image, caption: "Planning overview" } : image,
+    ),
+  );
+
+  await page.goto("/?project=wedwise");
+  const dialog = page.getByRole("dialog");
+  const gallery = dialog.getByRole("region", { name: "WedWise image gallery" });
+  const imageControl = gallery.getByRole("button", {
+    name: "View image full screen",
+  });
+
+  await page.keyboard.press("Tab");
+  await expect(imageControl).toBeFocused();
+  await page.keyboard.press("Enter");
+  const viewer = page.getByRole("dialog", { name: "Image viewer" });
+  await expect(viewer).toBeVisible();
+  await expect(viewer.getByRole("img")).toHaveAttribute("alt", /.+/);
+  await expect(viewer.getByText("Planning overview")).toBeVisible();
+  await expect(viewer.getByText("1 / 3")).toBeVisible();
+  await expect(
+    viewer.getByRole("button", { name: "Previous image" }),
+  ).toBeVisible();
+  const nextButton = viewer.getByRole("button", { name: "Next image" });
+  await expect(nextButton).toBeVisible();
+  await expect(
+    viewer.getByRole("button", { name: "Close image viewer" }),
+  ).toBeVisible();
+  await expect(
+    viewer.getByRole("button", { name: "Close image viewer" }),
+  ).toBeFocused();
+
+  await nextButton.click();
+  await expect(viewer.getByText("2 / 3")).toBeVisible();
+  await viewer.getByRole("button", { name: "Previous image" }).click();
+  await expect(viewer.getByText("1 / 3")).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(viewer.getByText("2 / 3")).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  await expect(viewer).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(gallery.getByText("2 / 3")).toBeVisible();
+  await expect(
+    gallery.getByRole("button", { name: "View image full screen" }),
+  ).toBeFocused();
+  await expect(page).toHaveURL(/project=wedwise/);
+
+  await gallery.getByRole("button", { name: "View image full screen" }).click();
+  await expect(viewer).toBeVisible();
+  await expect(viewer.getByText("2 / 3")).toBeVisible();
+  await viewer.getByRole("button", { name: "Close image viewer" }).click();
+  await expect(viewer).toHaveCount(0);
+  await expect(
+    gallery.getByRole("button", { name: "View image full screen" }),
+  ).toBeFocused();
+});
+
 test("a Project without Images has no gallery", async ({ page }) => {
   await page.goto("/?project=crypto-mining-platform");
   const dialog = page.getByRole("dialog");
@@ -98,19 +183,9 @@ test("a Project without Images has no gallery", async ({ page }) => {
 test("a single Image shows its caption without carousel controls", async ({
   page,
 }) => {
-  await page.route("**/content/projects.json", async (route) => {
-    const response = await route.fetch();
-    const document = (await response.json()) as {
-      data: Array<{
-        id: string;
-        images: Array<{ src: string; alt: string; caption?: string }>;
-      }>;
-    };
-    const project = document.data.find(({ id }) => id === "wedwise");
-    if (!project) throw new Error("WedWise Project not found");
-    project.images = [{ ...project.images[0], caption: "Planning overview" }];
-    await route.fulfill({ response, body: JSON.stringify(document) });
-  });
+  await interceptProjectImages(page, "wedwise", (images) => [
+    { ...images[0], caption: "Planning overview" },
+  ]);
 
   await page.goto("/?project=wedwise");
   const gallery = page
@@ -118,7 +193,15 @@ test("a single Image shows its caption without carousel controls", async ({
     .getByRole("region", { name: "WedWise image gallery" });
   await expect(gallery.getByRole("img")).toHaveAttribute("alt", /.+/);
   await expect(gallery.getByText("Planning overview")).toBeVisible();
-  await expect(gallery.getByRole("button")).toHaveCount(0);
+  await expect(
+    gallery.getByRole("button", { name: "Previous image" }),
+  ).toHaveCount(0);
+  await expect(gallery.getByRole("button", { name: "Next image" })).toHaveCount(
+    0,
+  );
+  await expect(
+    gallery.getByRole("button", { name: "View image full screen" }),
+  ).toBeVisible();
   await expect(gallery.getByText("1 / 1")).toBeVisible();
 });
 
