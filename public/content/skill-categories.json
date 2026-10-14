@@ -1,0 +1,24 @@
+{
+  "statusCode": 200,
+  "message": "Skill Categories loaded",
+  "data": [
+    { "id": "programming-languages", "name": "Programming Languages" },
+    { "id": "frontend", "name": "Frontend" },
+    { "id": "mobile", "name": "Mobile" },
+    { "id": "backend-and-apis", "name": "Backend and APIs" },
+    { "id": "databases-and-data-access", "name": "Databases and Data Access" },
+    { "id": "state-management", "name": "State Management" },
+    { "id": "testing", "name": "Testing" },
+    { "id": "architecture-and-development", "name": "Architecture and Development" },
+    { "id": "tools-and-platforms", "name": "Tools and Platforms" },
+    { "id": "web3", "name": "Web3" }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "lastPage": 1,
+    "nextPage": null,
+    "pageSize": 10,
+    "previousPage": null,
+    "total": 10
+  }
+}

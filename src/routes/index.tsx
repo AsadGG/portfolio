@@ -4,6 +4,7 @@ import { ContactLinks } from "../components/contact-links";
 import { Footer } from "../components/footer";
 import { HighlightsSection } from "../components/highlights-section";
 import { SectionState } from "../components/section-state";
+import { SkillsSection } from "../components/skills-section";
 import { Skeleton } from "../components/ui/skeleton";
 import { useProfile } from "../data/profile-view";
 
@@ -47,6 +48,7 @@ function Home() {
           )}
         </SectionState>
         <HighlightsSection />
+        <SkillsSection />
       </main>
       <Footer />
     </>

@@ -1,4 +1,4 @@
-import { createLiveQueryCollection } from "@tanstack/db";
+import { BasicIndex, createLiveQueryCollection, eq } from "@tanstack/db";
 import { queryCollectionOptions } from "@tanstack/query-db-collection";
 import { createCollection } from "@tanstack/react-db";
 import type { QueryClient } from "@tanstack/react-query";
@@ -9,6 +9,8 @@ export const GENERIC_CONTENT_ERROR_MESSAGE = "Couldn't load this section.";
 
 export const PROFILE_COLLECTION_KEY = "profile";
 export const HIGHLIGHTS_COLLECTION_KEY = "highlights";
+export const SKILL_CATEGORIES_COLLECTION_KEY = "skill-categories";
+export const SKILLS_COLLECTION_KEY = "skills";
 
 export const profileSchema = z.object({
   name: z.string().min(1),
@@ -33,6 +35,64 @@ export type Highlight = z.infer<typeof highlightSchema>;
 const storedHighlightSchema = highlightSchema.extend({
   documentOrder: z.number().int(),
 });
+
+export const skillCategorySchema = z.object({
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().min(1),
+});
+
+export type SkillCategory = z.infer<typeof skillCategorySchema>;
+const storedSkillCategorySchema = skillCategorySchema.extend({
+  documentOrder: z.number().int(),
+});
+
+export const skillSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  name: z.string().min(1),
+  categoryId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  listed: z.boolean(),
+});
+
+export type Skill = z.infer<typeof skillSchema>;
+const storedSkillSchema = skillSchema.extend({
+  documentOrder: z.number().int(),
+});
+
+export type SkillGroup = SkillCategory & { skills: Skill[] };
+
+type SkillsSectionRow = {
+  category: z.infer<typeof storedSkillCategorySchema>;
+  skill?: z.infer<typeof storedSkillSchema> | null;
+};
+
+export function groupSkillsSection(rows: SkillsSectionRow[]): SkillGroup[] {
+  const categories = new Map<string, SkillGroup>();
+  const orderedRows = [...rows].sort(
+    (left, right) =>
+      left.category.documentOrder - right.category.documentOrder ||
+      (left.skill?.documentOrder ?? -1) - (right.skill?.documentOrder ?? -1),
+  );
+
+  for (const { category, skill } of orderedRows) {
+    let group = categories.get(category.id);
+    if (!group) {
+      group = { id: category.id, name: category.name, skills: [] };
+      categories.set(category.id, group);
+    }
+    if (skill?.listed) {
+      group.skills.push({
+        id: skill.id,
+        name: skill.name,
+        categoryId: skill.categoryId,
+        listed: skill.listed,
+      });
+    }
+  }
+
+  return [...categories.values()].filter(
+    (category) => category.skills.length > 0,
+  );
+}
 
 export type ViewState<T> =
   | { status: "loading"; retry: () => Promise<void> }
@@ -156,6 +216,38 @@ export function createDataModule(options: DataModuleOptions) {
         text: highlight.text,
       })),
   );
+  const skillCategoriesCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [SKILL_CATEGORIES_COLLECTION_KEY],
+      queryFn: fetchSkillCategoriesDocument,
+      getKey: (category) => category.id,
+      queryClient,
+      retry: retryCount,
+      schema: storedSkillCategorySchema,
+    }),
+  );
+  const skillsCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [SKILLS_COLLECTION_KEY],
+      queryFn: fetchSkillsDocument,
+      getKey: (skill) => skill.id,
+      queryClient,
+      retry: retryCount,
+      schema: storedSkillSchema,
+    }),
+  );
+  skillsCollection.createIndex((skill) => skill.categoryId, {
+    indexType: BasicIndex,
+  });
+  const skillsSectionView = createLiveQueryCollection((query) =>
+    query
+      .from({ category: skillCategoriesCollection })
+      .leftJoin({ skill: skillsCollection }, ({ category, skill }) =>
+        eq(category.id, skill.categoryId),
+      )
+      .where(({ skill }) => skill === undefined || skill.listed)
+      .select(({ category, skill }) => ({ category, skill: skill ?? null })),
+  );
 
   async function fetchProfileDocument() {
     const envelopeSchema = itemEnvelopeSchema(profileSchema);
@@ -177,6 +269,33 @@ export function createDataModule(options: DataModuleOptions) {
       ...highlight,
       documentOrder,
     }));
+  }
+
+  async function fetchSkillCategoriesDocument() {
+    const categories = await fetchDocument<SkillCategory[]>(
+      "skill-categories.json",
+      (value) =>
+        listEnvelopeSchema(skillCategorySchema).parse(value) as {
+          statusCode: number;
+          data: unknown;
+        },
+    );
+    return categories.map((category, documentOrder) => ({
+      ...category,
+      documentOrder,
+    }));
+  }
+
+  async function fetchSkillsDocument() {
+    const skills = await fetchDocument<Skill[]>(
+      "skills.json",
+      (value) =>
+        listEnvelopeSchema(skillSchema).parse(value) as {
+          statusCode: number;
+          data: unknown;
+        },
+    );
+    return skills.map((skill, documentOrder) => ({ ...skill, documentOrder }));
   }
 
   async function getProfile() {
@@ -227,6 +346,38 @@ export function createDataModule(options: DataModuleOptions) {
     }
   }
 
+  async function getSkillsSection() {
+    try {
+      const rows = await skillsSectionView.toArrayWhenReady();
+      return {
+        status: "ready" as const,
+        data: groupSkillsSection(rows),
+        retry: retrySkillsSection,
+      };
+    } catch (error) {
+      const contentError =
+        error instanceof ContentError
+          ? error
+          : skillCategoriesCollection.utils.lastError instanceof ContentError
+            ? skillCategoriesCollection.utils.lastError
+            : skillsCollection.utils.lastError instanceof ContentError
+              ? skillsCollection.utils.lastError
+              : null;
+      return {
+        status: "error" as const,
+        message: contentError?.message ?? GENERIC_CONTENT_ERROR_MESSAGE,
+        retry: retrySkillsSection,
+      };
+    }
+  }
+
+  async function retrySkillsSection() {
+    await Promise.all([
+      skillCategoriesCollection.utils.refetch({ throwOnError: true }),
+      skillsCollection.utils.refetch({ throwOnError: true }),
+    ]);
+  }
+
   async function fetchDocument<T>(
     path: string,
     parseEnvelope: (value: unknown) => { statusCode: number; data: unknown },
@@ -271,6 +422,11 @@ export function createDataModule(options: DataModuleOptions) {
     highlightsCollection,
     highlightsView,
     getHighlights,
+    skillCategoriesCollection,
+    skillsCollection,
+    skillsSectionView,
+    getSkillsSection,
+    retrySkillsSection,
     fetchItemDocument<T extends z.ZodType>(path: string, recordSchema: T) {
       const envelopeSchema = itemEnvelopeSchema(recordSchema);
       return fetchDocument<z.output<T>>(
