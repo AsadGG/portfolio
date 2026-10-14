@@ -1,6 +1,10 @@
-import { BasicIndex, createLiveQueryCollection, eq } from "@tanstack/db";
 import { queryCollectionOptions } from "@tanstack/query-db-collection";
-import { createCollection } from "@tanstack/react-db";
+import {
+  BasicIndex,
+  createCollection,
+  createLiveQueryCollection,
+  eq,
+} from "@tanstack/react-db";
 import type { QueryClient } from "@tanstack/react-query";
 import ky from "ky";
 import { z } from "zod";

@@ -36,6 +36,58 @@ test.describe("background quality tiers", () => {
   });
 });
 
+test("default motion preference keeps the background animated", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  await expect(page.locator("[data-background]")).toHaveAttribute(
+    "data-motion",
+    "animated",
+  );
+});
+
+test("reduced motion keeps a still background while scrolling to Education", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  const background = page.locator("[data-background]");
+  await expect(background).toHaveAttribute("data-motion", "static");
+  await expect(background.locator("canvas")).toBeAttached();
+
+  await page
+    .getByRole("navigation", { name: "Sections" })
+    .first()
+    .getByRole("button", { name: "Education" })
+    .click();
+  await expect(page.locator('[data-section="education"]')).toBeInViewport();
+  await expect(background).toHaveAttribute("data-motion", "static");
+});
+
+test("changing to reduced motion updates the background without reloading", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const background = page.locator("[data-background]");
+  await expect(background).toHaveAttribute("data-motion", "animated");
+  await page
+    .getByRole("navigation", { name: "Sections" })
+    .first()
+    .getByRole("button", { name: "Education" })
+    .click();
+  await expect(page.locator('[data-section="education"]')).toBeInViewport();
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(background).toHaveAttribute("data-motion", "static");
+  await expect(background.locator("canvas")).toBeAttached();
+
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(background).toHaveAttribute("data-motion", "animated");
+});
+
 test.describe("mobile background quality", () => {
   test.use({
     viewport: { width: 390, height: 844 },

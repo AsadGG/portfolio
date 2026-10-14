@@ -8,10 +8,23 @@ type BackgroundMode = "canvas" | "gradient";
 export function BackgroundLayer() {
   const [mode, setMode] = useState<BackgroundMode>("gradient");
   const [quality, setQuality] = useState<BackgroundQuality>();
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
     setQuality(getBackgroundQuality());
-    if (!supportsWebGL()) return;
+
+    const motionPreference = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+    const updateMotionPreference = () =>
+      setReducedMotion(motionPreference.matches);
+    updateMotionPreference();
+    motionPreference.addEventListener("change", updateMotionPreference);
+
+    if (!supportsWebGL()) {
+      return () =>
+        motionPreference.removeEventListener("change", updateMotionPreference);
+    }
 
     let sceneFrame: number | undefined;
     const contentFrame = window.requestAnimationFrame(() => {
@@ -21,6 +34,7 @@ export function BackgroundLayer() {
     return () => {
       window.cancelAnimationFrame(contentFrame);
       if (sceneFrame !== undefined) window.cancelAnimationFrame(sceneFrame);
+      motionPreference.removeEventListener("change", updateMotionPreference);
     };
   }, []);
 
@@ -30,10 +44,11 @@ export function BackgroundLayer() {
       className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-background bg-[image:radial-gradient(ellipse_at_18%_12%,color-mix(in_oklab,var(--electric-cyan)_16%,transparent),transparent_42%),radial-gradient(ellipse_at_82%_26%,color-mix(in_oklab,var(--electric-cyan)_8%,transparent),transparent_44%)]"
       data-background={mode}
       data-quality={quality}
+      data-motion={reducedMotion ? "static" : "animated"}
     >
       {mode === "canvas" && quality && (
         <Suspense fallback={null}>
-          <BackgroundScene quality={quality} />
+          <BackgroundScene quality={quality} reducedMotion={reducedMotion} />
         </Suspense>
       )}
     </div>

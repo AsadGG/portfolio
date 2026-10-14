@@ -1,4 +1,4 @@
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AdditiveBlending,
@@ -88,12 +88,27 @@ type ParticleFieldProps = {
   count: number;
 };
 
-function ParticleField({ count }: ParticleFieldProps) {
+function ParticleField({
+  count,
+  reducedMotion,
+}: ParticleFieldProps & { reducedMotion: boolean }) {
   const pointsRef = useRef<ThreePoints>(null);
   const elapsedRef = useRef(0);
   const geometry = useMemo(() => createParticleGeometry(count), [count]);
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    if (!reducedMotion) return;
+    const points = pointsRef.current;
+    if (!points) return;
+    elapsedRef.current = 0;
+    points.rotation.set(0, 0, 0);
+    points.position.y = 0;
+    invalidate();
+  }, [invalidate, reducedMotion]);
 
   useFrame((_, delta) => {
+    if (reducedMotion) return;
     const points = pointsRef.current;
     if (!points) return;
 
@@ -124,7 +139,7 @@ function ParticleField({ count }: ParticleFieldProps) {
   );
 }
 
-function HeroShape() {
+function HeroShape({ reducedMotion }: { reducedMotion: boolean }) {
   const shapeRef = useRef<Mesh>(null);
   const shaderRef = useRef<MorphShader | null>(null);
   const activeSectionRef = useRef(getActiveSection());
@@ -166,19 +181,60 @@ function HeroShape() {
   }, [color]);
   const currentPosition = useRef(new Vector3(...SHAPE_TARGETS.hero.position));
   const targetLookAt = useRef(new Vector3(...SHAPE_TARGETS.hero.lookAt));
+  const { camera, invalidate, size } = useThree();
 
   useEffect(() => {
     const unsubscribe = subscribeToActiveSection(() => {
-      activeSectionRef.current = getActiveSection();
+      if (!reducedMotion) activeSectionRef.current = getActiveSection();
     });
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    if (reducedMotion) {
+      const hero = SHAPE_TARGETS.hero;
+      const responsive = size.width < 640;
+      activeSectionRef.current = "hero";
+      camera.position.set(...hero.camera);
+      targetLookAt.current.set(...hero.lookAt);
+      camera.lookAt(targetLookAt.current);
+      currentPosition.current.set(
+        responsive ? 2 : hero.position[0],
+        responsive ? 2.25 : hero.position[1],
+        hero.position[2],
+      );
+      if (shapeRef.current) {
+        shapeRef.current.position.copy(currentPosition.current);
+        shapeRef.current.rotation.set(0, 0, 0);
+        shapeRef.current.scale.setScalar(responsive ? 0.62 : 1);
+      }
+      morphRef.current = hero.morph;
+      if (shaderRef.current)
+        shaderRef.current.uniforms.uMorph.value = hero.morph;
+      color.copy(targetColors.hero);
+      material.color.copy(color);
+      material.emissive.copy(color);
+      material.opacity = responsive ? 0.11 : 0.52;
+    } else {
+      activeSectionRef.current = getActiveSection();
+    }
+    invalidate();
+  }, [
+    camera,
+    color,
+    invalidate,
+    material,
+    reducedMotion,
+    size.width,
+    targetColors,
+  ]);
 
   useEffect(() => () => material.dispose(), [material]);
 
   useFrame(({ camera, size }, delta) => {
+    if (reducedMotion) return;
     const target = SHAPE_TARGETS[activeSectionRef.current];
     const responsive = size.width < 640;
     const alpha = 1 - Math.exp(-3.2 * delta);
@@ -274,8 +330,10 @@ function getAccentColor() {
 
 export default function BackgroundScene({
   quality,
+  reducedMotion,
 }: {
   quality: BackgroundQuality;
+  reducedMotion: boolean;
 }) {
   const [frameloop, setFrameloop] = useState<"always" | "never">(() =>
     document.visibilityState === "hidden" ? "never" : "always",
@@ -294,14 +352,17 @@ export default function BackgroundScene({
     <Canvas
       aria-hidden="true"
       dpr={settings.dpr}
-      frameloop={frameloop}
+      frameloop={reducedMotion ? "demand" : frameloop}
       gl={{ alpha: false, antialias: false }}
     >
       <color attach="background" args={["#09090b"]} />
       <ambientLight intensity={0.65} />
       <directionalLight intensity={1.2} position={[3, 3, 4]} />
-      <HeroShape />
-      <ParticleField count={settings.particleCount} />
+      <HeroShape reducedMotion={reducedMotion} />
+      <ParticleField
+        count={settings.particleCount}
+        reducedMotion={reducedMotion}
+      />
     </Canvas>
   );
 }
