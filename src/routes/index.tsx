@@ -1,19 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { z } from "zod";
-import { ActiveSectionTracker } from "../components/active-section-tracker";
-import { ContactLinks } from "../components/contact-links";
-import { EducationSection } from "../components/education-section";
-import { ExperienceSection } from "../components/experience-section";
-import { Footer } from "../components/footer";
-import { HighlightsSection } from "../components/highlights-section";
-import { IntroSection } from "../components/intro-section";
-import { ProjectDialog } from "../components/project-dialog";
-import { SectionState } from "../components/section-state";
-import { SkillsSection } from "../components/skills-section";
-import { StickyHeader } from "../components/sticky-header";
-import { Skeleton } from "../components/ui/skeleton";
-import { useProfile } from "../data/profile-view";
+import { ActiveSectionTracker } from "#/components/active-section-tracker";
+import { ContactLinks } from "#/components/contact-links";
+import { EducationSection } from "#/components/education-section";
+import { ExperienceSection } from "#/components/experience-section";
+import { Footer } from "#/components/footer";
+import { HighlightsSection } from "#/components/highlights-section";
+import { IntroSection } from "#/components/intro-section";
+import { SectionState } from "#/components/section-state";
+import { SkillsSection } from "#/components/skills-section";
+import { StickyHeader } from "#/components/sticky-header";
+import { Skeleton } from "#/components/ui/skeleton";
+import { useProfile } from "#/data/profile-view";
+
+const ProjectDialog = lazy(() =>
+  import("#/components/project-dialog").then((module) => ({
+    default: module.ProjectDialog,
+  })),
+);
 
 export const Route = createFileRoute("/")({
   validateSearch: z.object({
@@ -93,19 +98,23 @@ function Home() {
         <EducationSection />
       </main>
       <Footer />
-      <ProjectDialog
-        onClose={closeProject}
-        onPartChange={(partId) =>
-          navigate({
-            search: (previous) => ({ ...previous, part: partId }),
-            replace: true,
-            resetScroll: false,
-          })
-        }
-        partId={part}
-        projectId={project}
-        returnFocus={returnFocus}
-      />
+      {project && (
+        <Suspense fallback={null}>
+          <ProjectDialog
+            onClose={closeProject}
+            onPartChange={(partId) =>
+              navigate({
+                search: (previous) => ({ ...previous, part: partId }),
+                replace: true,
+                resetScroll: false,
+              })
+            }
+            partId={part}
+            projectId={project}
+            returnFocus={returnFocus}
+          />
+        </Suspense>
+      )}
     </>
   );
 }

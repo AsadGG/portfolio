@@ -5,9 +5,9 @@ import {
   groupSkillsSection,
   type SkillGroup,
   type ViewState,
-} from "./data-module";
-import { useDataModule } from "./data-module-provider";
-import { useCollectionError } from "./use-collection-error";
+} from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
+import { useCollectionError } from "#/data/use-collection-error";
 
 export function useSkillsSection(): ViewState<SkillGroup[]> {
   const {

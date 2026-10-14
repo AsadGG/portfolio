@@ -9,11 +9,11 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { cn } from "cn";
 import { useState } from "react";
-import { BackgroundLayer } from "../components/background-layer";
-import { createDataModule } from "../data/data-module";
-import { DataModuleProvider } from "../data/data-module-provider";
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
-import appCss from "../styles.css?url";
+import { BackgroundLayer } from "#/components/background-layer";
+import { createDataModule } from "#/data/data-module";
+import { DataModuleProvider } from "#/data/data-module-provider";
+import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
+import appCss from "#/styles.css?url";
 
 const bodyClassName = cn(
   "min-h-full overflow-x-hidden bg-background font-sans text-foreground antialiased",
@@ -68,6 +68,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   }),
   shellComponent: RootDocument,
   component: RootComponent,
+  notFoundComponent: NotFound,
 });
 
 function RootComponent() {
@@ -81,6 +82,20 @@ function RootComponent() {
         <Outlet />
       </div>
     </DataModuleProvider>
+  );
+}
+
+function NotFound() {
+  return (
+    <main className="mx-auto grid min-h-svh w-[min(1080px,calc(100%-2rem))] place-content-center gap-4 text-center">
+      <h1 className="text-4xl font-semibold tracking-tight">Page not found</h1>
+      <p className="text-muted-foreground">
+        The page you requested doesn't exist.
+      </p>
+      <a className="justify-self-center" href="/">
+        Return to the home page
+      </a>
+    </main>
   );
 }
 

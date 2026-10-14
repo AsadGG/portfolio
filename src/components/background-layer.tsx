@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import type { BackgroundQuality } from "./background-scene";
+import type { BackgroundQuality } from "#/components/background-scene";
 
-const BackgroundScene = lazy(() => import("./background-scene"));
+const BackgroundScene = lazy(() => import("#/components/background-scene"));
 
 type BackgroundMode = "canvas" | "gradient";
 
@@ -11,30 +11,64 @@ export function BackgroundLayer() {
   const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
-    setQuality(getBackgroundQuality());
-
+    let currentQuality = getBackgroundQuality();
+    let webglSupported: boolean | undefined;
+    let cancelDeferredScene: (() => void) | undefined;
     const motionPreference = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
-    const updateMotionPreference = () =>
-      setReducedMotion(motionPreference.matches);
+
+    const hasWebGL = () => {
+      webglSupported ??= supportsWebGL();
+      return webglSupported;
+    };
+
+    const deferScene = () => {
+      cancelDeferredScene?.();
+      if (currentQuality === "low" || motionPreference.matches || !hasWebGL()) {
+        return;
+      }
+
+      cancelDeferredScene = runWhenIdle(() => {
+        if (!motionPreference.matches && currentQuality === "high") {
+          setMode("canvas");
+        }
+      });
+    };
+
+    const updateMotionPreference = () => {
+      const shouldReduceMotion = motionPreference.matches;
+      setReducedMotion(shouldReduceMotion);
+      if (shouldReduceMotion) {
+        cancelDeferredScene?.();
+        setMode("gradient");
+      } else {
+        deferScene();
+      }
+    };
+
+    const updateQuality = () => {
+      const nextQuality = getBackgroundQuality();
+      if (nextQuality === currentQuality) return;
+      currentQuality = nextQuality;
+      setQuality(nextQuality);
+      if (nextQuality === "low") {
+        cancelDeferredScene?.();
+        setMode("gradient");
+      } else {
+        deferScene();
+      }
+    };
+
+    setQuality(currentQuality);
     updateMotionPreference();
     motionPreference.addEventListener("change", updateMotionPreference);
-
-    if (!supportsWebGL()) {
-      return () =>
-        motionPreference.removeEventListener("change", updateMotionPreference);
-    }
-
-    let sceneFrame: number | undefined;
-    const contentFrame = window.requestAnimationFrame(() => {
-      sceneFrame = window.requestAnimationFrame(() => setMode("canvas"));
-    });
+    window.addEventListener("resize", updateQuality);
 
     return () => {
-      window.cancelAnimationFrame(contentFrame);
-      if (sceneFrame !== undefined) window.cancelAnimationFrame(sceneFrame);
+      cancelDeferredScene?.();
       motionPreference.removeEventListener("change", updateMotionPreference);
+      window.removeEventListener("resize", updateQuality);
     };
   }, []);
 
@@ -69,4 +103,22 @@ function supportsWebGL() {
   } catch {
     return false;
   }
+}
+
+function runWhenIdle(callback: () => void) {
+  const idleWindow = window as Window & {
+    requestIdleCallback?: (
+      callback: () => void,
+      options?: { timeout: number },
+    ) => number;
+    cancelIdleCallback?: (handle: number) => void;
+  };
+
+  if (idleWindow.requestIdleCallback) {
+    const handle = idleWindow.requestIdleCallback(callback, { timeout: 2000 });
+    return () => idleWindow.cancelIdleCallback?.(handle);
+  }
+
+  const handle = window.setTimeout(callback, 1000);
+  return () => window.clearTimeout(handle);
 }

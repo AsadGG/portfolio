@@ -5,8 +5,8 @@ import {
   type Profile,
   profileSchema,
   type ViewState,
-} from "./data-module";
-import { useDataModule } from "./data-module-provider";
+} from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
 
 export function useProfile(): ViewState<Profile> {
   const { profileCollection, profileView } = useDataModule();

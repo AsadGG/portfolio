@@ -1,4 +1,4 @@
-import type { SectionId } from "./sections";
+import type { SectionId } from "#/sections";
 
 let activeSection: SectionId = "hero";
 const listeners = new Set<() => void>();

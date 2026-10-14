@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useExperience } from "../data/experience-view";
-import { SectionReveal } from "./section-reveal";
-import { SectionState } from "./section-state";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardHeader } from "./ui/card";
-import { Skeleton } from "./ui/skeleton";
+import { useExperience } from "#/data/experience-view";
+import { SectionReveal } from "#/components/section-reveal";
+import { SectionState } from "#/components/section-state";
+import { Badge } from "#/components/ui/badge";
+import { Card, CardContent, CardHeader } from "#/components/ui/card";
+import { Skeleton } from "#/components/ui/skeleton";
 
 export function ExperienceSection({
   onProjectOpen,

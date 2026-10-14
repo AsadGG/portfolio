@@ -5,8 +5,8 @@ import {
   type Highlight,
   highlightSchema,
   type ViewState,
-} from "./data-module";
-import { useDataModule } from "./data-module-provider";
+} from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
 
 export function useHighlights(): ViewState<Highlight[]> {
   const { highlightsCollection, highlightsView } = useDataModule();

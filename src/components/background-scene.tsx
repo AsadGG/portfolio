@@ -15,9 +15,9 @@ import {
 import {
   getActiveSection,
   subscribeToActiveSection,
-} from "../active-section-store";
-import type { SectionId } from "../sections";
-import { SECTION_IDS } from "../sections";
+} from "#/active-section-store";
+import type { SectionId } from "#/sections";
+import { SECTION_IDS } from "#/sections";
 
 const QUALITY_SETTINGS = {
   high: { dpr: [1, 2] as [number, number], particleCount: 3_200 },

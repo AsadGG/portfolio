@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import type { ProjectDetail } from "../data/data-module";
-import { useDataModule } from "../data/data-module-provider";
-import { type GalleryImage, ImageGallery } from "./image-gallery";
-import { Markdown } from "./markdown";
-import { Badge } from "./ui/badge";
+import type { ProjectDetail } from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
+import { type GalleryImage, ImageGallery } from "#/components/image-gallery";
+import { Markdown } from "#/components/markdown";
+import { Badge } from "#/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "./ui/tabs";
+} from "#/components/ui/dialog";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 
 type DetailState =
   | { status: "loading"; projectId?: string }

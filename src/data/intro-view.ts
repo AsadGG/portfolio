@@ -3,8 +3,8 @@ import {
   ContentError,
   GENERIC_CONTENT_ERROR_MESSAGE,
   type ViewState,
-} from "./data-module";
-import { useDataModule } from "./data-module-provider";
+} from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
 
 export function useIntro(): ViewState<string> {
   const {

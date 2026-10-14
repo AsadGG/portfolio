@@ -1,6 +1,6 @@
 import { type KeyboardEvent, useRef, useState } from "react";
-import { Button } from "./ui/button";
-import { Dialog, DialogContent } from "./ui/dialog";
+import { Button } from "#/components/ui/button";
+import { Dialog, DialogContent } from "#/components/ui/dialog";
 
 export type GalleryImage = {
   url: string;

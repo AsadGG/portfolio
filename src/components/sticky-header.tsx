@@ -1,14 +1,14 @@
 import { MenuIcon } from "lucide-react";
-import { useProfile } from "../data/profile-view";
-import { SECTION_IDS } from "../sections";
-import { useActiveSection } from "../use-active-section";
-import { Button } from "./ui/button";
+import { useProfile } from "#/data/profile-view";
+import { SECTION_IDS } from "#/sections";
+import { useActiveSection } from "#/use-active-section";
+import { Button } from "#/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "#/components/ui/dropdown-menu";
 
 const sections = SECTION_IDS.filter((id) => id !== "hero");
 

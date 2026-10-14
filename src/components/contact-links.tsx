@@ -1,4 +1,4 @@
-import type { Profile } from "../data/data-module";
+import type { Profile } from "#/data/data-module";
 
 export function ContactLinks({
   profile,

@@ -6,9 +6,9 @@ import {
   type EducationSectionData,
   GENERIC_CONTENT_ERROR_MESSAGE,
   type ViewState,
-} from "./data-module";
-import { useDataModule } from "./data-module-provider";
-import { useCollectionError } from "./use-collection-error";
+} from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
+import { useCollectionError } from "#/data/use-collection-error";
 
 export function useEducation(): ViewState<EducationSectionData> {
   const { educationCollection, educationView } = useDataModule();
