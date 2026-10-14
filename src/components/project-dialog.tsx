@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ProjectDetail } from "../data/data-module";
 import { useDataModule } from "../data/data-module-provider";
+import { ImageGallery } from "./image-gallery";
 import { Markdown } from "./markdown";
 import { Badge } from "./ui/badge";
 import {
@@ -96,6 +97,15 @@ function ProjectContents({ project }: { project: ProjectDetail }) {
           {project.summary}
         </DialogDescription>
       </DialogHeader>
+      <ImageGallery
+        key={project.id}
+        images={project.images.map(({ src, alt, caption }) => ({
+          url: src,
+          alt,
+          caption,
+        }))}
+        label={project.name}
+      />
       {project.description ? <Markdown>{project.description}</Markdown> : null}
       {project.links ? (
         <nav aria-label={`${project.name} links`} className="flex gap-4">

@@ -53,6 +53,75 @@ test("Project cards open a shareable dialog without losing scroll or card focus"
   await expect(card).toBeFocused();
 });
 
+test("Project dialog Images can be browsed with buttons and arrow keys", async ({
+  page,
+}) => {
+  await page.goto("/?project=wedwise");
+  const dialog = page.getByRole("dialog");
+  const gallery = dialog.getByRole("region", { name: "WedWise image gallery" });
+
+  await expect(gallery).toBeVisible();
+  await expect(gallery.getByText("1 / 3")).toBeVisible();
+  await expect(gallery.getByRole("img")).toHaveAttribute("alt", /.+/);
+  await expect(gallery.locator("img").nth(1)).toHaveAttribute(
+    "loading",
+    "lazy",
+  );
+  await gallery.getByRole("button", { name: "Next image" }).click();
+  await expect(gallery.getByText("2 / 3")).toBeVisible();
+  const previousButton = gallery.getByRole("button", {
+    name: "Previous image",
+  });
+  await previousButton.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(gallery.getByText("1 / 3")).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(gallery.getByText("2 / 3")).toBeVisible();
+  await page.keyboard.press("ArrowLeft");
+  await expect(gallery.getByText("1 / 3")).toBeVisible();
+
+  await page.keyboard.press("Tab");
+  const nextButton = gallery.getByRole("button", { name: "Next image" });
+  await expect(nextButton).toBeFocused();
+  await expect(nextButton).toHaveClass(/focus-visible:ring-2/);
+});
+
+test("a Project without Images has no gallery", async ({ page }) => {
+  await page.goto("/?project=crypto-mining-platform");
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog.getByRole("region", { name: /image gallery/ }),
+  ).toHaveCount(0);
+});
+
+test("a single Image shows its caption without carousel controls", async ({
+  page,
+}) => {
+  await page.route("**/content/projects.json", async (route) => {
+    const response = await route.fetch();
+    const document = (await response.json()) as {
+      data: Array<{
+        id: string;
+        images: Array<{ src: string; alt: string; caption?: string }>;
+      }>;
+    };
+    const project = document.data.find(({ id }) => id === "wedwise");
+    if (!project) throw new Error("WedWise Project not found");
+    project.images = [{ ...project.images[0], caption: "Planning overview" }];
+    await route.fulfill({ response, body: JSON.stringify(document) });
+  });
+
+  await page.goto("/?project=wedwise");
+  const gallery = page
+    .getByRole("dialog")
+    .getByRole("region", { name: "WedWise image gallery" });
+  await expect(gallery.getByRole("img")).toHaveAttribute("alt", /.+/);
+  await expect(gallery.getByText("Planning overview")).toBeVisible();
+  await expect(gallery.getByRole("button")).toHaveCount(0);
+  await expect(gallery.getByText("1 / 1")).toBeVisible();
+});
+
 test("Project Descriptions render markdown with readable styling and safe links", async ({
   page,
 }) => {
