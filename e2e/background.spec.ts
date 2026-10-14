@@ -38,23 +38,30 @@ test("the canvas background stays error-free while scrolling the page", async ({
   ).toBeVisible();
   await page.waitForLoadState("networkidle");
 
-  const skillsHeading = page.getByRole("heading", {
-    level: 2,
-    name: "Skills",
-  });
-  // Initialize the section tracker before checking errors during a full-page scroll.
-  await page
+  const sectionNavigation = page
     .getByRole("navigation", { name: "Sections" })
-    .first()
-    .getByRole("button", { name: "Skills" })
-    .click();
-  await expect(skillsHeading).toBeInViewport();
+    .first();
+  const errors = collectConsoleErrors(page);
+
+  for (const section of [
+    { id: "about", label: "About" },
+    { id: "highlights", label: "Highlights" },
+    { id: "skills", label: "Skills" },
+    { id: "experience", label: "Experience" },
+    { id: "education", label: "Education" },
+  ]) {
+    await sectionNavigation
+      .getByRole("button", { name: section.label })
+      .click();
+    await expect(
+      page.locator(`[data-section="${section.id}"]`),
+    ).toBeInViewport();
+  }
+
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
   await expect(
     page.getByRole("main").getByRole("heading", { level: 1 }),
   ).toBeInViewport();
-
-  const errors = collectConsoleErrors(page);
 
   await page.evaluate(async () => {
     const step = Math.max(1, window.innerHeight * 0.8);
