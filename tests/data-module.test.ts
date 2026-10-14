@@ -5,6 +5,7 @@ import {
   ContentError,
   createDataModule,
   GENERIC_CONTENT_ERROR_MESSAGE,
+  projectSchema,
 } from "../src/data/data-module";
 
 const recordSchema = z.object({ id: z.string(), name: z.string() });
@@ -65,6 +66,36 @@ describe("content document transport", () => {
       { id: "one", name: "First" },
       { id: "two", name: "Second" },
     ]);
+  });
+
+  it("rejects a Project Image with empty alt text", async () => {
+    const module = createModule({
+      statusCode: 200,
+      message: "Projects loaded",
+      data: [
+        {
+          id: "project",
+          engagementId: "engagement",
+          name: "Project",
+          summary: "Summary",
+          description: "Description",
+          skillIds: [],
+          images: [{ src: "images/project.svg", alt: "  " }],
+        },
+      ],
+      pagination: {
+        currentPage: 1,
+        lastPage: 1,
+        nextPage: null,
+        pageSize: 1,
+        previousPage: null,
+        total: 1,
+      },
+    });
+
+    await expect(
+      module.fetchListDocument("projects.json", projectSchema),
+    ).rejects.toMatchObject({ message: GENERIC_CONTENT_ERROR_MESSAGE });
   });
 
   it("rejects a list envelope without pagination", async () => {

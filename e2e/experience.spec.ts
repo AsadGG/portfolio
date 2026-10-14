@@ -83,6 +83,37 @@ test("Experience shows ordered Project cards with Skill chips and Client names",
   ).toBeVisible();
 });
 
+test("Project cards show their first Image or a no-image placeholder", async ({
+  page,
+}) => {
+  await page.goto("/");
+
+  const experience = page.locator("#experience");
+  const wedWiseCard = experience
+    .getByRole("heading", { level: 4, name: "WedWise" })
+    .locator("xpath=../..");
+  const thumbnail = wedWiseCard.getByRole("img");
+  await expect(thumbnail).toHaveAttribute(
+    "alt",
+    "Placeholder image for WedWise",
+  );
+  await expect
+    .poll(() =>
+      thumbnail.evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+
+  const cryptoCard = experience
+    .getByRole("heading", { level: 4, name: "Crypto-Mining Platform" })
+    .locator("xpath=../..");
+  await expect(cryptoCard.locator("img")).toHaveCount(0);
+  const placeholder = cryptoCard.locator(
+    '[aria-label="Placeholder image for Crypto-Mining Platform"]',
+  );
+  await expect(placeholder).toContainText("Placeholder");
+  await expect(placeholder).toContainText("Crypto-Mining Platform");
+});
+
 test("Experience can retry a failed Project document without showing Retry elsewhere", async ({
   page,
 }) => {

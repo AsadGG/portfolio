@@ -146,6 +146,16 @@ describe("Experience view", () => {
           summary: "Second summary.",
           description: "Second description.",
           skillIds: ["ky", "react"],
+          images: [
+            {
+              src: "images/second-project/first.svg",
+              alt: "First project placeholder",
+            },
+            {
+              src: "images/second-project/second.svg",
+              alt: "Second project placeholder",
+            },
+          ],
         },
         {
           id: "first-project",
@@ -154,6 +164,7 @@ describe("Experience view", () => {
           summary: "First summary.",
           description: "First description.",
           skillIds: ["typescript"],
+          images: [],
         },
         {
           id: "client-project",
@@ -163,6 +174,7 @@ describe("Experience view", () => {
           description: "Client description.",
           skillIds: ["ky"],
           clientName: "Client Name",
+          images: [],
         },
       ],
       [
@@ -187,12 +199,17 @@ describe("Experience view", () => {
           name: "Second Project",
           summary: "Second summary.",
           skills: ["ky", "React"],
+          thumbnail: {
+            src: "http://content.test/images/second-project/first.svg",
+            alt: "First project placeholder",
+          },
         },
         {
           id: "first-project",
           name: "First Project",
           summary: "First summary.",
           skills: ["TypeScript"],
+          thumbnail: undefined,
         },
       ]);
       expect(view.data[2].projects).toEqual([
@@ -202,6 +219,7 @@ describe("Experience view", () => {
           summary: "Client summary.",
           clientName: "Client Name",
           skills: ["ky"],
+          thumbnail: undefined,
         },
       ]);
     }

@@ -93,6 +93,14 @@ const storedEngagementSchema = engagementSchema.and(
   z.object({ documentOrder: z.number().int() }),
 );
 
+export const imageSchema = z.object({
+  src: z.string().min(1),
+  alt: z.string().trim().min(1),
+  caption: z.string().min(1).optional(),
+});
+
+export type ProjectImage = z.infer<typeof imageSchema>;
+
 export const projectSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -101,6 +109,7 @@ export const projectSchema = z
     summary: z.string().min(1),
     description: z.string().min(1),
     skillIds: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
+    images: z.array(imageSchema),
     clientName: z.string().min(1).optional(),
   })
   .strict();
@@ -137,6 +146,7 @@ export type ExperienceProject = {
   summary: string;
   clientName?: string;
   skills: string[];
+  thumbnail?: ProjectImage;
 };
 
 export type SkillGroup = SkillCategory & { skills: Skill[] };
@@ -254,6 +264,10 @@ export interface DataModuleOptions {
 export function createDataModule(options: DataModuleOptions) {
   const baseUrl =
     options.baseUrl ?? import.meta.env.VITE_CONTENT_BASE_URL ?? "/content/";
+  const contentBaseUrl = new URL(
+    baseUrl,
+    globalThis.location?.origin ?? "http://localhost",
+  ).toString();
   const queryClient = options.queryClient;
   const retries = options.retries ?? true;
   const now = options.now ?? (() => new Date());
@@ -464,6 +478,10 @@ export function createDataModule(options: DataModuleOptions) {
     );
     return projects.map((project, documentOrder) => ({
       ...project,
+      images: project.images.map((image) => ({
+        ...image,
+        src: new URL(image.src, contentBaseUrl).toString(),
+      })),
       documentOrder,
     }));
   }
@@ -875,6 +893,7 @@ export function buildExperienceView(
           name: project.name,
           summary: project.summary,
           ...(project.clientName ? { clientName: project.clientName } : {}),
+          ...(project.images[0] ? { thumbnail: project.images[0] } : {}),
           skills: project.skillIds.flatMap((id) => {
             const skill = skillsById.get(id);
             return skill ? [skill.name] : [];

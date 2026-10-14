@@ -38,6 +38,27 @@ export function ExperienceSection() {
                       {engagement.projects.map((project) => (
                         <li key={project.id}>
                           <Card className="h-full">
+                            {project.thumbnail ? (
+                              <img
+                                alt={project.thumbnail.alt}
+                                className="aspect-[16/10] w-full object-cover"
+                                loading="lazy"
+                                src={project.thumbnail.src}
+                              />
+                            ) : (
+                              <div
+                                aria-label={`Placeholder image for ${project.name}`}
+                                className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 bg-accent/20 px-4 text-center text-accent-foreground"
+                                role="img"
+                              >
+                                <span className="text-xs font-semibold uppercase tracking-[0.2em]">
+                                  Placeholder
+                                </span>
+                                <span className="text-sm font-medium">
+                                  {project.name}
+                                </span>
+                              </div>
+                            )}
                             <CardHeader>
                               <h4 className="text-base font-semibold tracking-tight">
                                 {project.name}
