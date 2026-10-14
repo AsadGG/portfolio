@@ -5,6 +5,9 @@ dist-ssr
 *.local
 .env
 .nitro
+.playwright-cli
+playwright-report
+test-results
 .tanstack
 .wrangler
 .output
