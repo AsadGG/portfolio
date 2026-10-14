@@ -8,6 +8,7 @@ import { z } from "zod";
 export const GENERIC_CONTENT_ERROR_MESSAGE = "Couldn't load this section.";
 
 export const PROFILE_COLLECTION_KEY = "profile";
+export const HIGHLIGHTS_COLLECTION_KEY = "highlights";
 
 export const profileSchema = z.object({
   name: z.string().min(1),
@@ -21,6 +22,17 @@ export const profileSchema = z.object({
 });
 
 export type Profile = z.infer<typeof profileSchema>;
+
+export const highlightSchema = z.object({
+  id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  title: z.string().min(1),
+  text: z.string().min(1),
+});
+
+export type Highlight = z.infer<typeof highlightSchema>;
+const storedHighlightSchema = highlightSchema.extend({
+  documentOrder: z.number().int(),
+});
 
 export type ViewState<T> =
   | { status: "loading"; retry: () => Promise<void> }
@@ -124,6 +136,26 @@ export function createDataModule(options: DataModuleOptions) {
   const profileView = createLiveQueryCollection((query) =>
     query.from({ profile: profileCollection }).select(({ profile }) => profile),
   );
+  const highlightsCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [HIGHLIGHTS_COLLECTION_KEY],
+      queryFn: fetchHighlightsDocument,
+      getKey: (highlight) => highlight.id,
+      queryClient,
+      retry: retryCount,
+      schema: storedHighlightSchema,
+    }),
+  );
+  const highlightsView = createLiveQueryCollection((query) =>
+    query
+      .from({ highlight: highlightsCollection })
+      .orderBy(({ highlight }) => highlight.documentOrder)
+      .select(({ highlight }) => ({
+        id: highlight.id,
+        title: highlight.title,
+        text: highlight.text,
+      })),
+  );
 
   async function fetchProfileDocument() {
     const envelopeSchema = itemEnvelopeSchema(profileSchema);
@@ -132,6 +164,19 @@ export function createDataModule(options: DataModuleOptions) {
       (value) =>
         envelopeSchema.parse(value) as { statusCode: number; data: unknown },
     );
+  }
+
+  async function fetchHighlightsDocument() {
+    const envelopeSchema = listEnvelopeSchema(highlightSchema);
+    const highlights = await fetchDocument<Highlight[]>(
+      "highlights.json",
+      (value) =>
+        envelopeSchema.parse(value) as { statusCode: number; data: unknown },
+    );
+    return highlights.map((highlight, documentOrder) => ({
+      ...highlight,
+      documentOrder,
+    }));
   }
 
   async function getProfile() {
@@ -154,6 +199,28 @@ export function createDataModule(options: DataModuleOptions) {
             ? error.message
             : profileCollection.utils.lastError instanceof ContentError
               ? profileCollection.utils.lastError.message
+              : GENERIC_CONTENT_ERROR_MESSAGE,
+        retry,
+      };
+    }
+  }
+
+  async function getHighlights() {
+    const retry = async () => {
+      await highlightsCollection.utils.refetch({ throwOnError: true });
+    };
+
+    try {
+      const data = await highlightsView.toArrayWhenReady();
+      return { status: "ready" as const, data, retry };
+    } catch (error) {
+      return {
+        status: "error" as const,
+        message:
+          error instanceof ContentError
+            ? error.message
+            : highlightsCollection.utils.lastError instanceof ContentError
+              ? highlightsCollection.utils.lastError.message
               : GENERIC_CONTENT_ERROR_MESSAGE,
         retry,
       };
@@ -201,6 +268,9 @@ export function createDataModule(options: DataModuleOptions) {
     profileCollection,
     profileView,
     getProfile,
+    highlightsCollection,
+    highlightsView,
+    getHighlights,
     fetchItemDocument<T extends z.ZodType>(path: string, recordSchema: T) {
       const envelopeSchema = itemEnvelopeSchema(recordSchema);
       return fetchDocument<z.output<T>>(

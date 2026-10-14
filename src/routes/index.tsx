@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { ContactLinks } from "../components/contact-links";
 import { Footer } from "../components/footer";
+import { HighlightsSection } from "../components/highlights-section";
 import { SectionState } from "../components/section-state";
 import { Skeleton } from "../components/ui/skeleton";
 import { useProfile } from "../data/profile-view";
@@ -45,6 +46,7 @@ function Home() {
             </section>
           )}
         </SectionState>
+        <HighlightsSection />
       </main>
       <Footer />
     </>
