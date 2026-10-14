@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ViewState } from "../data/data-module";
+import { Button } from "./ui/button";
 
 export function SectionState<T>({
   state,
@@ -14,14 +15,19 @@ export function SectionState<T>({
 
   if (state.status === "error") {
     return (
-      <section aria-live="polite" className="section-error" role="alert">
-        <p>{state.message}</p>
-        <button
+      <section
+        aria-live="polite"
+        className="flex min-h-[75vh] flex-col items-start justify-center gap-4 py-16"
+        role="alert"
+      >
+        <p className="text-muted-foreground">{state.message}</p>
+        <Button
+          className="h-10 px-4 text-base"
           onClick={() => void state.retry().catch(() => {})}
-          type="button"
+          size="lg"
         >
           Retry
-        </button>
+        </Button>
       </section>
     );
   }

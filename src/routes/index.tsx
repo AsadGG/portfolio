@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { SectionState } from "../components/section-state";
+import { Skeleton } from "../components/ui/skeleton";
 import { useProfile } from "../data/profile-view";
 
 export const Route = createFileRoute("/")({ component: Home });
+
+const heroClassName =
+  "flex min-h-[75vh] flex-col items-start justify-center gap-4 py-16";
 
 function Home() {
   const profile = useProfile();
@@ -15,14 +19,26 @@ function Home() {
   }, [profile]);
 
   return (
-    <main className="page-wrap">
+    <main className="mx-auto w-[min(1080px,calc(100%-2rem))]">
       <SectionState skeleton={<ProfileSkeleton />} state={profile}>
         {(data) => (
-          <section aria-labelledby="profile-name" className="profile-hero">
-            <h1 id="profile-name">{data.name}</h1>
-            <p>{data.headline}</p>
-            <p>{data.location}</p>
-            <nav aria-label="Contact links">
+          <section aria-labelledby="profile-name" className={heroClassName}>
+            <h1
+              className="text-[clamp(3rem,10vw,6.5rem)] leading-[0.98] tracking-[-0.06em]"
+              id="profile-name"
+            >
+              {data.name}
+            </h1>
+            <p className="text-[clamp(1rem,2.5vw,1.25rem)] text-muted-foreground">
+              {data.headline}
+            </p>
+            <p className="text-[clamp(1rem,2.5vw,1.25rem)] text-muted-foreground">
+              {data.location}
+            </p>
+            <nav
+              aria-label="Contact links"
+              className="mt-3 flex flex-wrap gap-x-6 gap-y-3"
+            >
               <a href={`mailto:${data.email}`}>Email</a>
               <a href={`tel:${data.phone.replace(/[^\d+]/g, "")}`}>
                 {data.phone}
@@ -46,13 +62,25 @@ function ProfileSkeleton() {
     <output
       aria-busy="true"
       aria-label="Loading Profile"
-      className="profile-hero profile-skeleton"
+      className={heroClassName}
     >
-      <span aria-hidden="true" className="skeleton-line skeleton-name" />
-      <span aria-hidden="true" className="skeleton-line skeleton-headline" />
-      <span aria-hidden="true" className="skeleton-line skeleton-location" />
-      <span aria-hidden="true" className="skeleton-line skeleton-links" />
-      <span className="visually-hidden">Loading Profile</span>
+      <Skeleton
+        aria-hidden="true"
+        className="h-[clamp(3rem,10vw,6.5rem)] w-[min(36rem,90%)] rounded-full"
+      />
+      <Skeleton
+        aria-hidden="true"
+        className="h-5 w-[min(28rem,78%)] rounded-full"
+      />
+      <Skeleton
+        aria-hidden="true"
+        className="h-5 w-[min(18rem,55%)] rounded-full"
+      />
+      <Skeleton
+        aria-hidden="true"
+        className="mt-3 h-8 w-[min(24rem,72%)] rounded-full"
+      />
+      <span className="sr-only">Loading Profile</span>
     </output>
   );
 }

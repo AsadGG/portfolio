@@ -1,5 +1,9 @@
 # Agents
 
+## Coding standards
+
+Styling and component rules (Tailwind before CSS, shadcn before raw HTML) are in `CODING_STANDARDS.md`. Follow them when writing code and cite them when reviewing it.
+
 ## Agent skills
 
 ### Issue tracker
