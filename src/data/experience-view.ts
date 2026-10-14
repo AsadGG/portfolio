@@ -9,14 +9,31 @@ import {
 import { useDataModule } from "./data-module-provider";
 
 export function useExperience(): ViewState<ExperienceEngagement[]> {
-  const { engagementsCollection, experienceView } = useDataModule();
+  const {
+    engagementsCollection,
+    projectsCollection,
+    skillsCollection,
+    experienceView,
+    experienceSkillsView,
+    retryExperience,
+  } = useDataModule();
   const query = useLiveQuery(experienceView);
-  const retry = async () => {
-    await engagementsCollection.utils.refetch({ throwOnError: true });
-  };
+  const skillsQuery = useLiveQuery(experienceSkillsView);
+  const retry = retryExperience;
 
-  if (engagementsCollection.utils.isError || query.isError) {
-    const error = engagementsCollection.utils.lastError ?? query.persistedError;
+  if (
+    engagementsCollection.utils.isError ||
+    projectsCollection.utils.isError ||
+    skillsCollection.utils.isError ||
+    query.isError ||
+    skillsQuery.isError
+  ) {
+    const error =
+      engagementsCollection.utils.lastError ??
+      projectsCollection.utils.lastError ??
+      skillsCollection.utils.lastError ??
+      query.persistedError ??
+      skillsQuery.persistedError;
     return {
       status: "error",
       message:
@@ -27,8 +44,12 @@ export function useExperience(): ViewState<ExperienceEngagement[]> {
     };
   }
 
-  if (query.data) {
-    return { status: "ready", data: buildExperienceView(query.data), retry };
+  if (query.data && skillsQuery.data) {
+    return {
+      status: "ready",
+      data: buildExperienceView(query.data, skillsQuery.data),
+      retry,
+    };
   }
 
   return { status: "loading", retry };

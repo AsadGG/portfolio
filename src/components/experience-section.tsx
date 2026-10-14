@@ -1,5 +1,7 @@
 import { useExperience } from "../data/experience-view";
 import { SectionState } from "./section-state";
+import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader } from "./ui/card";
 import { Skeleton } from "./ui/skeleton";
 
 export function ExperienceSection() {
@@ -30,6 +32,41 @@ export function ExperienceSection() {
                     <p className="max-w-3xl leading-relaxed text-muted-foreground">
                       {engagement.summary}
                     </p>
+                  ) : null}
+                  {engagement.projects.length > 0 ? (
+                    <ul className="grid gap-4 pt-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {engagement.projects.map((project) => (
+                        <li key={project.id}>
+                          <Card className="h-full">
+                            <CardHeader>
+                              <h4 className="text-base font-semibold tracking-tight">
+                                {project.name}
+                              </h4>
+                              {project.clientName ? (
+                                <p className="text-muted-foreground">
+                                  Client: {project.clientName}
+                                </p>
+                              ) : null}
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <p className="leading-relaxed text-muted-foreground">
+                                {project.summary}
+                              </p>
+                              <ul
+                                aria-label={`Skills used in ${project.name}`}
+                                className="flex flex-wrap gap-2"
+                              >
+                                {project.skills.map((skill) => (
+                                  <li key={skill}>
+                                    <Badge variant="secondary">{skill}</Badge>
+                                  </li>
+                                ))}
+                              </ul>
+                            </CardContent>
+                          </Card>
+                        </li>
+                      ))}
+                    </ul>
                   ) : null}
                 </li>
               ))}

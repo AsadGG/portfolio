@@ -19,7 +19,7 @@ test("Skills section shows ordered categories and omits Unlisted Skills", async 
   await expect(section.getByText("ky", { exact: true })).toHaveCount(0);
 });
 
-test("Skills can retry its own failed document while other sections remain available", async ({
+test("Skills and Experience can retry their shared Skills document", async ({
   page,
 }) => {
   let blocked = true;
@@ -38,6 +38,7 @@ test("Skills can retry its own failed document while other sections remain avail
   await page.goto("/");
   const main = page.getByRole("main");
   const skills = page.getByRole("region", { name: "Skills" });
+  const experience = page.locator("#experience");
   await expect(
     main.getByRole("heading", { level: 1, name: "Asad Ur Rahman" }),
   ).toBeVisible();
@@ -49,11 +50,15 @@ test("Skills can retry its own failed document while other sections remain avail
   ).toBeVisible();
   const retry = skills.getByRole("button", { name: "Retry" });
   await expect(retry).toBeVisible();
-  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(1);
+  await expect(experience.getByRole("button", { name: "Retry" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(2);
 
   blocked = false;
   await retry.click();
   await expect(
     skills.getByRole("heading", { level: 2, name: "Skills" }),
+  ).toBeVisible();
+  await expect(
+    experience.getByRole("heading", { level: 4, name: "WedWise" }),
   ).toBeVisible();
 });

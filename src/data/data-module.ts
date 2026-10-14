@@ -12,6 +12,7 @@ export const HIGHLIGHTS_COLLECTION_KEY = "highlights";
 export const SKILL_CATEGORIES_COLLECTION_KEY = "skill-categories";
 export const SKILLS_COLLECTION_KEY = "skills";
 export const ENGAGEMENTS_COLLECTION_KEY = "engagements";
+export const PROJECTS_COLLECTION_KEY = "projects";
 export const EDUCATION_COLLECTION_KEY = "education";
 
 export const profileSchema = z.object({
@@ -92,6 +93,23 @@ const storedEngagementSchema = engagementSchema.and(
   z.object({ documentOrder: z.number().int() }),
 );
 
+export const projectSchema = z
+  .object({
+    id: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    engagementId: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    name: z.string().min(1),
+    summary: z.string().min(1),
+    description: z.string().min(1),
+    skillIds: z.array(z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
+    clientName: z.string().min(1).optional(),
+  })
+  .strict();
+
+export type Project = z.infer<typeof projectSchema>;
+const storedProjectSchema = projectSchema.extend({
+  documentOrder: z.number().int(),
+});
+
 export const educationSchema = z.object({
   institution: z.string().min(1),
   degree: z.string().min(1),
@@ -110,6 +128,15 @@ export type ExperienceEngagement = {
   dateRange: string;
   location?: string;
   summary?: string;
+  projects: ExperienceProject[];
+};
+
+export type ExperienceProject = {
+  id: string;
+  name: string;
+  summary: string;
+  clientName?: string;
+  skills: string[];
 };
 
 export type SkillGroup = SkillCategory & { skills: Skill[] };
@@ -302,6 +329,19 @@ export function createDataModule(options: DataModuleOptions) {
       schema: storedEngagementSchema,
     }),
   );
+  const projectsCollection = createCollection(
+    queryCollectionOptions({
+      queryKey: [PROJECTS_COLLECTION_KEY],
+      queryFn: fetchProjectsDocument,
+      getKey: (project) => project.id,
+      queryClient,
+      retry: retryCount,
+      schema: storedProjectSchema,
+    }),
+  );
+  projectsCollection.createIndex((project) => project.engagementId, {
+    indexType: BasicIndex,
+  });
   const educationCollection = createCollection(
     queryCollectionOptions({
       queryKey: [EDUCATION_COLLECTION_KEY],
@@ -322,7 +362,20 @@ export function createDataModule(options: DataModuleOptions) {
       .from({ engagement: engagementsCollection })
       .select(({ engagement }) => engagement),
   );
-  const experienceView = engagementsView;
+  const experienceView = createLiveQueryCollection((query) =>
+    query
+      .from({ engagement: engagementsCollection })
+      .leftJoin({ project: projectsCollection }, ({ engagement, project }) =>
+        eq(engagement.id, project.engagementId),
+      )
+      .select(({ engagement, project }) => ({
+        engagement,
+        project: project ?? null,
+      })),
+  );
+  const experienceSkillsView = createLiveQueryCollection((query) =>
+    query.from({ skill: skillsCollection }).select(({ skill }) => skill),
+  );
   skillsCollection.createIndex((skill) => skill.categoryId, {
     indexType: BasicIndex,
   });
@@ -400,6 +453,21 @@ export function createDataModule(options: DataModuleOptions) {
     }));
   }
 
+  async function fetchProjectsDocument() {
+    const projects = await fetchDocument<Project[]>(
+      "projects.json",
+      (value) =>
+        listEnvelopeSchema(projectSchema).parse(value) as {
+          statusCode: number;
+          data: unknown;
+        },
+    );
+    return projects.map((project, documentOrder) => ({
+      ...project,
+      documentOrder,
+    }));
+  }
+
   async function fetchEducationDocument() {
     const envelopeSchema = itemEnvelopeSchema(educationSchema);
     return fetchDocument<Education>(
@@ -409,28 +477,40 @@ export function createDataModule(options: DataModuleOptions) {
     );
   }
 
-  async function getExperience() {
-    const retry = async () => {
-      await engagementsCollection.utils.refetch({ throwOnError: true });
-    };
+  async function retryExperience() {
+    await Promise.all(
+      [engagementsCollection, projectsCollection, skillsCollection]
+        .filter((collection) => collection.utils.isError)
+        .map((collection) => collection.utils.refetch({ throwOnError: true })),
+    );
+  }
 
+  async function getExperience() {
     try {
-      const rows = await experienceView.toArrayWhenReady();
+      const [rows, skills] = await Promise.all([
+        experienceView.toArrayWhenReady(),
+        experienceSkillsView.toArrayWhenReady(),
+      ]);
       return {
         status: "ready" as const,
-        data: buildExperienceView(rows),
-        retry,
+        data: buildExperienceView(rows, skills),
+        retry: retryExperience,
       };
     } catch (error) {
+      const sourceError = [
+        engagementsCollection.utils.lastError,
+        projectsCollection.utils.lastError,
+        skillsCollection.utils.lastError,
+      ].find((source) => source instanceof ContentError);
       return {
         status: "error" as const,
         message:
           error instanceof ContentError
             ? error.message
-            : engagementsCollection.utils.lastError instanceof ContentError
-              ? engagementsCollection.utils.lastError.message
+            : sourceError instanceof ContentError
+              ? sourceError.message
               : GENERIC_CONTENT_ERROR_MESSAGE,
-        retry,
+        retry: retryExperience,
       };
     }
   }
@@ -654,8 +734,11 @@ export function createDataModule(options: DataModuleOptions) {
     getSkillsSection,
     retrySkillsSection,
     engagementsCollection,
+    projectsCollection,
     engagementsView,
     experienceView,
+    experienceSkillsView,
+    retryExperience,
     getExperience,
     educationCollection,
     educationView,
@@ -731,24 +814,71 @@ function formatYearMonth(value: string) {
 }
 
 export function buildExperienceView(
-  engagements: Array<Engagement & { documentOrder: number }>,
+  rows: Array<{
+    engagement: Engagement & { documentOrder: number };
+    project?: (Project & { documentOrder: number }) | null;
+  }>,
+  skills: Array<Skill & { documentOrder: number }>,
 ): ExperienceEngagement[] {
-  return [...engagements]
+  const skillsById = new Map(skills.map((skill) => [skill.id, skill]));
+  const engagements = new Map<
+    string,
+    {
+      engagement: Engagement & { documentOrder: number };
+      projects: Map<
+        string,
+        {
+          project: Project & { documentOrder: number };
+        }
+      >;
+    }
+  >();
+  for (const { engagement, project } of rows) {
+    let grouped = engagements.get(engagement.id);
+    if (!grouped) {
+      grouped = { engagement, projects: new Map() };
+      engagements.set(engagement.id, grouped);
+    }
+    if (!project) continue;
+    let projectGroup = grouped.projects.get(project.id);
+    if (!projectGroup) {
+      projectGroup = { project };
+      grouped.projects.set(project.id, projectGroup);
+    }
+  }
+
+  return [...engagements.values()]
     .sort((left, right) => {
-      if (left.kind !== right.kind) return left.kind === "freelance" ? 1 : -1;
-      if (left.kind === "freelance")
-        return left.documentOrder - right.documentOrder;
+      if (left.engagement.kind !== right.engagement.kind)
+        return left.engagement.kind === "freelance" ? 1 : -1;
+      if (left.engagement.kind === "freelance")
+        return left.engagement.documentOrder - right.engagement.documentOrder;
       return (
-        right.start.localeCompare(left.start) ||
-        left.documentOrder - right.documentOrder
+        right.engagement.start.localeCompare(left.engagement.start) ||
+        left.engagement.documentOrder - right.engagement.documentOrder
       );
     })
-    .map((engagement) => ({
+    .map(({ engagement, projects }) => ({
       id: engagement.id,
       heading:
         engagement.kind === "employment" ? engagement.companyName : "Freelance",
       dateRange: `${formatYearMonth(engagement.start)} – ${engagement.end ? formatYearMonth(engagement.end) : "Present"}`,
       ...(engagement.location ? { location: engagement.location } : {}),
       ...(engagement.summary ? { summary: engagement.summary } : {}),
+      projects: [...projects.values()]
+        .sort(
+          (left, right) =>
+            left.project.documentOrder - right.project.documentOrder,
+        )
+        .map(({ project }) => ({
+          id: project.id,
+          name: project.name,
+          summary: project.summary,
+          ...(project.clientName ? { clientName: project.clientName } : {}),
+          skills: project.skillIds.flatMap((id) => {
+            const skill = skillsById.get(id);
+            return skill ? [skill.name] : [];
+          }),
+        })),
     }));
 }

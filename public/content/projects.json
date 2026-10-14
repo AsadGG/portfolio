@@ -1,0 +1,63 @@
+{
+  "statusCode": 200,
+  "message": "Projects loaded successfully.",
+  "data": [
+    {
+      "id": "wedwise",
+      "engagementId": "urapp",
+      "name": "WedWise",
+      "summary": "A wedding planning platform for planners and couples. Owned frontend development and REST API integration across the product's planning workflows.",
+      "description": "Owned frontend development and REST API integration for a wedding planning platform used by planners and couples. Built modules for events, timelines, budgets, vendor tracking, tasks, meetings, contracts, guest management, moodboards, templates, calendars, and user permissions. Developed forms and API-connected workflows with React Hook Form, Zustand, TanStack Query, ky, and date-fns.",
+      "skillIds": ["react", "typescript", "react-hook-form", "zustand", "tanstack-query", "ky", "date-fns", "api-integration"]
+    },
+    {
+      "id": "laundry-app",
+      "engagementId": "urapp",
+      "name": "Laundry Operations App",
+      "summary": "A mobile app for laundry operations, including driver workflows and store management.",
+      "description": "Developed a React Native and Ionic mobile app for laundry operations, with driver workflows and store management.",
+      "skillIds": ["react-native", "ionic", "typescript"]
+    },
+    {
+      "id": "salon-healthcare-platform",
+      "engagementId": "urapp",
+      "name": "Salon & Healthcare Platform",
+      "summary": "A multi-tenant platform with tenant-specific features across salon and healthcare products, including appointments, staff actions, and check-in/check-out.",
+      "description": "Developed shared application logic for a multi-tenant platform with tenant-specific behavior across salon and healthcare products. Built workflows for appointments, staff actions, and check-in/check-out.",
+      "skillIds": ["react-native", "ionic", "typescript", "multi-tenant-applications"]
+    },
+    {
+      "id": "crypto-mining-platform",
+      "engagementId": "urapp",
+      "name": "Crypto-Mining Platform",
+      "summary": "A backend built from the ground up for hosted crypto-mining machines, from its database and APIs through purchase and profit workflows.",
+      "description": "Built a crypto-mining platform backend from the ground up with Fastify, TypeScript, PostgreSQL, Kysely, and database migrations. Designed reusable authentication and role-based access control. Integrated admin-verified cryptocurrency purchase submissions, third-party currency conversion, and custom profit calculations for hosted mining machines.",
+      "skillIds": ["node-js", "fastify", "typescript", "postgresql", "kysely", "database-migrations", "authentication", "role-based-access-control-rbac"]
+    },
+    {
+      "id": "nano",
+      "engagementId": "2cimple",
+      "name": "Nano",
+      "summary": "Rebuilt as the sole developer from Cordova to Ionic and Capacitor while keeping compatibility with the existing APIs.",
+      "description": "Rebuilt the Nano mobile application as the sole developer, replacing its legacy Cordova implementation with Ionic and Capacitor while maintaining compatibility with existing APIs. Delivered social and rewards features for completing tasks, publishing photos, earning private digital coins, and redeeming them in a connected store. Migrated its legacy Web3 integration to ethers.js.",
+      "skillIds": ["ionic", "capacitor", "typescript", "ethers-js", "web3-js"]
+    },
+    {
+      "id": "gripsun",
+      "engagementId": "freelance",
+      "name": "Gripsun Privilege Club",
+      "summary": "The API, admin console, and mobile app for Gripsun's solar rewards program in Pakistan, covering installer claims, customer registration, dealer payments, and admin reviews.",
+      "description": "Build the API, admin console, and mobile app for Gripsun's solar rewards program in Pakistan. Installers claim fitted units for cashback, customers register units for warranty and points, dealers pay installers, and admins review claims and payouts. Develop every feature test-first. The API uses Fastify, TypeScript, PostgreSQL, and Kysely; the admin console uses React, TanStack Router, and TanStack Query; and the mobile app uses React Native and Expo. The deployment pipeline runs migrations and health checks, with automatic rollback when a health check fails.",
+      "skillIds": ["node-js", "fastify", "typescript", "postgresql", "kysely", "react", "rest-api-development", "tanstack-router", "tanstack-query", "server-state-management", "react-native", "expo", "vitest", "playwright", "jest", "react-testing-library", "docker", "authentication", "role-based-access-control-rbac", "database-migrations", "full-stack-development"],
+      "clientName": "Gripsun"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "lastPage": 1,
+    "nextPage": null,
+    "pageSize": 6,
+    "previousPage": null,
+    "total": 6
+  }
+}

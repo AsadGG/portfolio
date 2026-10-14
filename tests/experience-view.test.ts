@@ -26,12 +26,12 @@ const engagements = [
   { id: "freelance", kind: "freelance", start: "2026-07", location: "Remote" },
 ];
 
-function envelope(data: unknown) {
+function envelope(data: unknown, message = "Engagements loaded") {
   const count = Array.isArray(data) ? data.length : 1;
   return new Response(
     JSON.stringify({
       statusCode: 200,
-      message: "Engagements loaded",
+      message,
       data,
       pagination: {
         currentPage: 1,
@@ -46,10 +46,23 @@ function envelope(data: unknown) {
   );
 }
 
-function createModule(records: unknown) {
+function createModule(
+  records: unknown,
+  projects: unknown = [],
+  skills: unknown = [],
+) {
+  const documents: Record<string, unknown> = {
+    "engagements.json": records,
+    "projects.json": projects,
+    "skills.json": skills,
+  };
   return createDataModule({
     baseUrl: "http://content.test/",
-    fetch: async () => envelope(records),
+    fetch: async (input) => {
+      const url = input instanceof Request ? input.url : String(input);
+      const path = new URL(url).pathname.split("/").at(-1) ?? "";
+      return envelope(documents[path] ?? [], `${path} loaded`);
+    },
     queryClient: new QueryClient(),
     retries: false,
   });
@@ -120,5 +133,77 @@ describe("Experience view", () => {
       status: "error",
       message: GENERIC_CONTENT_ERROR_MESSAGE,
     });
+  });
+
+  it("groups Projects in document order and resolves their ordered Skills including Unlisted Skills", async () => {
+    const module = createModule(
+      engagements,
+      [
+        {
+          id: "second-project",
+          engagementId: "urapp",
+          name: "Second Project",
+          summary: "Second summary.",
+          description: "Second description.",
+          skillIds: ["ky", "react"],
+        },
+        {
+          id: "first-project",
+          engagementId: "urapp",
+          name: "First Project",
+          summary: "First summary.",
+          description: "First description.",
+          skillIds: ["typescript"],
+        },
+        {
+          id: "client-project",
+          engagementId: "freelance",
+          name: "Client Project",
+          summary: "Client summary.",
+          description: "Client description.",
+          skillIds: ["ky"],
+          clientName: "Client Name",
+        },
+      ],
+      [
+        { id: "react", name: "React", categoryId: "frontend", listed: true },
+        {
+          id: "typescript",
+          name: "TypeScript",
+          categoryId: "language",
+          listed: true,
+        },
+        { id: "ky", name: "ky", categoryId: "tools", listed: false },
+      ],
+    );
+
+    const view = await module.getExperience();
+
+    expect(view.status).toBe("ready");
+    if (view.status === "ready") {
+      expect(view.data[0].projects).toEqual([
+        {
+          id: "second-project",
+          name: "Second Project",
+          summary: "Second summary.",
+          skills: ["ky", "React"],
+        },
+        {
+          id: "first-project",
+          name: "First Project",
+          summary: "First summary.",
+          skills: ["TypeScript"],
+        },
+      ]);
+      expect(view.data[2].projects).toEqual([
+        {
+          id: "client-project",
+          name: "Client Project",
+          summary: "Client summary.",
+          clientName: "Client Name",
+          skills: ["ky"],
+        },
+      ]);
+    }
   });
 });
