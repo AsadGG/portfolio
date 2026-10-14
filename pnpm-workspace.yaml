@@ -1,0 +1,5 @@
+minimumReleaseAgeExclude:
+  - '@tanstack/db-ivm@0.2.0'
+  - '@tanstack/db@0.14.0'
+  - '@tanstack/query-db-collection@1.4.4'
+  - '@tanstack/react-db@0.5.9'
