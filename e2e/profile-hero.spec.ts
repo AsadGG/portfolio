@@ -48,10 +48,13 @@ test("Profile hero can retry after the Profile document fails", async ({
 
   await page.goto("/");
   const main = page.getByRole("main");
+  const profileError = main.locator(":scope > section[role='alert']");
   await expect(
-    main.getByText("Profile is temporarily unavailable."),
+    profileError.getByText("Profile is temporarily unavailable.", {
+      exact: true,
+    }),
   ).toBeVisible();
-  const retry = main.getByRole("button", { name: "Retry" });
+  const retry = profileError.getByRole("button", { name: "Retry" });
   await expect(retry).toBeVisible();
   expect(attempts).toBe(2);
 

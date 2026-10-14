@@ -36,9 +36,10 @@ test("Experience can retry its failed document while other sections remain avail
 
   await page.goto("/");
   const experience = page.locator("#experience");
+  const about = page.locator('[data-section="about"]');
   const retry = experience.getByRole("button", { name: "Retry" });
   await expect(retry).toBeVisible();
-  await expect(page.getByRole("button", { name: "Retry" })).toHaveCount(1);
+  await expect(about.getByRole("button", { name: "Retry" })).toBeVisible();
   await expect(
     page.getByRole("region", { name: "Skills" }).getByText("TypeScript"),
   ).toBeVisible();

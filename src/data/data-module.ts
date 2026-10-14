@@ -206,6 +206,7 @@ export class ContentError extends Error {
 export interface DataModuleOptions {
   baseUrl?: string;
   fetch?: typeof globalThis.fetch;
+  now?: () => Date;
   queryClient: QueryClient;
   retries?: boolean;
 }
@@ -215,6 +216,7 @@ export function createDataModule(options: DataModuleOptions) {
     options.baseUrl ?? import.meta.env.VITE_CONTENT_BASE_URL ?? "/content/";
   const queryClient = options.queryClient;
   const retries = options.retries ?? true;
+  const now = options.now ?? (() => new Date());
   const client = ky.create({
     prefix: baseUrl,
     fetch: options.fetch ?? globalThis.fetch,
@@ -287,11 +289,12 @@ export function createDataModule(options: DataModuleOptions) {
       schema: storedEngagementSchema,
     }),
   );
-  const experienceView = createLiveQueryCollection((query) =>
+  const engagementsView = createLiveQueryCollection((query) =>
     query
       .from({ engagement: engagementsCollection })
       .select(({ engagement }) => engagement),
   );
+  const experienceView = engagementsView;
   skillsCollection.createIndex((skill) => skill.categoryId, {
     indexType: BasicIndex,
   });
@@ -421,6 +424,65 @@ export function createDataModule(options: DataModuleOptions) {
     }
   }
 
+  async function getIntro() {
+    let profileFailed = false;
+    let engagementsFailed = false;
+    const retry = async () => {
+      const failedCollections = [
+        ...(profileFailed ? [profileCollection] : []),
+        ...(engagementsFailed ? [engagementsCollection] : []),
+      ];
+      await Promise.all(
+        failedCollections.map((collection) =>
+          collection.utils.refetch({ throwOnError: true }),
+        ),
+      );
+    };
+
+    const [profileResult, engagementsResult] = await Promise.allSettled([
+      profileView.toArrayWhenReady(),
+      engagementsView.toArrayWhenReady(),
+    ]);
+
+    if (
+      profileResult.status === "rejected" ||
+      engagementsResult.status === "rejected"
+    ) {
+      profileFailed = profileResult.status === "rejected";
+      engagementsFailed = engagementsResult.status === "rejected";
+      const errors = [
+        profileCollection.utils.lastError,
+        engagementsCollection.utils.lastError,
+      ];
+      const contentError = errors.find(
+        (error) => error instanceof ContentError,
+      );
+      return {
+        status: "error" as const,
+        message: contentError?.message ?? GENERIC_CONTENT_ERROR_MESSAGE,
+        retry,
+      };
+    }
+
+    const profile = profileResult.value[0];
+    const engagements = engagementsResult.value;
+    if (
+      !profile ||
+      (profile.intro.includes("{years}") && engagements.length === 0)
+    ) {
+      return {
+        status: "error" as const,
+        message: GENERIC_CONTENT_ERROR_MESSAGE,
+        retry,
+      };
+    }
+    return {
+      status: "ready" as const,
+      data: resolveIntroText(profile.intro, engagements, now()),
+      retry,
+    };
+  }
+
   async function getHighlights() {
     const retry = async () => {
       await highlightsCollection.utils.refetch({ throwOnError: true });
@@ -516,6 +578,10 @@ export function createDataModule(options: DataModuleOptions) {
     profileCollection,
     profileView,
     getProfile,
+    getIntro,
+    resolveIntro(intro: string, engagements: Engagement[]) {
+      return resolveIntroText(intro, engagements, now());
+    },
     highlightsCollection,
     highlightsView,
     getHighlights,
@@ -525,6 +591,7 @@ export function createDataModule(options: DataModuleOptions) {
     getSkillsSection,
     retrySkillsSection,
     engagementsCollection,
+    engagementsView,
     experienceView,
     getExperience,
     fetchItemDocument<T extends z.ZodType>(path: string, recordSchema: T) {
@@ -544,6 +611,25 @@ export function createDataModule(options: DataModuleOptions) {
       );
     },
   };
+}
+
+export function resolveIntroText(
+  intro: string,
+  engagements: Engagement[],
+  now: Date,
+) {
+  if (!intro.includes("{years}")) return intro;
+  const earliestStart = engagements.reduce(
+    (earliest, engagement) =>
+      engagement.start < earliest ? engagement.start : earliest,
+    engagements[0]?.start ?? "",
+  );
+  if (!earliestStart) return intro;
+
+  const [startYear, startMonth] = earliestStart.split("-").map(Number);
+  let years = now.getUTCFullYear() - startYear;
+  if (now.getUTCMonth() + 1 < startMonth) years -= 1;
+  return intro.replaceAll("{years}", String(years));
 }
 
 const monthNames = [

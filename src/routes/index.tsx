@@ -4,6 +4,7 @@ import { ContactLinks } from "../components/contact-links";
 import { ExperienceSection } from "../components/experience-section";
 import { Footer } from "../components/footer";
 import { HighlightsSection } from "../components/highlights-section";
+import { IntroSection } from "../components/intro-section";
 import { SectionState } from "../components/section-state";
 import { SkillsSection } from "../components/skills-section";
 import { Skeleton } from "../components/ui/skeleton";
@@ -48,6 +49,7 @@ function Home() {
             </section>
           )}
         </SectionState>
+        <IntroSection />
         <HighlightsSection />
         <SkillsSection />
         <ExperienceSection />
