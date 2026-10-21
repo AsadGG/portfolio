@@ -20,7 +20,7 @@ function remarkHtmlAsText() {
 export function Markdown({ children }: { children: string }) {
   return (
     <div
-      className="prose prose-invert prose-a:text-primary"
+      className="prose max-w-none prose-invert prose-p:leading-relaxed prose-p:text-muted-foreground prose-a:text-primary prose-strong:text-foreground prose-li:text-muted-foreground prose-li:marker:text-primary/70"
       data-testid="markdown-content"
     >
       <ReactMarkdown

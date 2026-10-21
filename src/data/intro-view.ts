@@ -75,3 +75,14 @@ export function useIntro(): ViewState<string> {
 
   return { status: "loading", retry };
 }
+
+/** Whole years since the earliest Engagement started, once Engagements load. */
+export function useYearsOfExperience(): number | undefined {
+  const dataModule = useDataModule();
+  const query = useLiveQuery(dataModule.engagementsView);
+  const engagements = query.data;
+  if (!engagements || engagements.length === 0) return undefined;
+
+  const years = Number(dataModule.resolveIntro("{years}", engagements));
+  return Number.isInteger(years) ? years : undefined;
+}

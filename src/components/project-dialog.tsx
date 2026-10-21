@@ -1,8 +1,11 @@
+import { cn } from "cn";
+import { ExternalLinkIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { type GalleryImage, ImageGallery } from "#/components/image-gallery";
 import { Markdown } from "#/components/markdown";
 import { Badge } from "#/components/ui/badge";
+import { buttonVariants } from "#/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -30,15 +33,28 @@ function SkillList({ skills, label }: { skills: string[]; label: string }) {
   if (skills.length === 0) return null;
 
   return (
-    <ul aria-label={label} className="flex flex-wrap gap-2">
+    <ul aria-label={label} className="flex flex-wrap gap-1.5">
       {skills.map((skill) => (
         <li key={skill}>
-          <Badge variant="secondary">{skill}</Badge>
+          <Badge
+            className="h-6 rounded-md bg-white/6 px-2 font-mono text-[0.6875rem] font-normal text-foreground/80"
+            variant="secondary"
+          >
+            {skill}
+          </Badge>
         </li>
       ))}
     </ul>
   );
 }
+
+const metaChipClassName =
+  "rounded-full border border-white/10 bg-white/3 px-3 py-1 text-xs text-muted-foreground";
+
+const linkButtonClassName = cn(
+  buttonVariants({ variant: "outline", size: "lg" }),
+  "h-10 gap-2 rounded-full border-white/12 bg-white/3 px-4 text-sm text-foreground hover:border-white/25 hover:bg-white/8",
+);
 
 export function ProjectDialog({
   projectId,
@@ -83,14 +99,16 @@ export function ProjectDialog({
         if (!nextOpen && projectId) onClose();
       }}
       onOpenChangeComplete={(nextOpen) => {
-        if (!nextOpen) returnFocus.current?.focus();
+        // The card may be off-screen when the Project was opened from the
+        // hero gallery, so restoring focus must not scroll the page to it.
+        if (!nextOpen) returnFocus.current?.focus({ preventScroll: true });
       }}
     >
       <DialogContent
         aria-label={
           currentDetail.status === "ready" ? currentDetail.data.name : "Project"
         }
-        className="max-h-[min(80vh,48rem)] overflow-y-auto p-8 sm:max-w-2xl"
+        className="max-h-[min(90vh,60rem)] overflow-y-auto rounded-3xl bg-popover/95 p-6 text-sm shadow-[0_40px_120px_-30px_rgb(0_0_0/0.8)] ring-white/10 backdrop-blur-xl sm:max-w-3xl sm:p-10"
       >
         {currentDetail.status === "ready" ? (
           <ProjectContents
@@ -121,20 +139,22 @@ function ProjectContents({
     project.parts.find(({ id }) => id === partId) ?? project.parts[0];
 
   return (
-    <div className="space-y-5">
-      <DialogHeader className="space-y-2 pr-8">
-        <DialogTitle className="text-2xl font-semibold tracking-tight">
+    <div className="space-y-8">
+      <DialogHeader className="gap-4 pr-8">
+        <DialogTitle className="text-3xl font-semibold tracking-[-0.03em] text-balance sm:text-4xl">
           {project.name}
         </DialogTitle>
-        {project.clientName ? (
-          <p className="text-sm text-muted-foreground">
-            Client: {project.clientName}
-          </p>
+        {project.clientName || project.role ? (
+          <div className="flex flex-wrap gap-2">
+            {project.clientName ? (
+              <p className={metaChipClassName}>Client: {project.clientName}</p>
+            ) : null}
+            {project.role ? (
+              <p className={metaChipClassName}>Role: {project.role}</p>
+            ) : null}
+          </div>
         ) : null}
-        {project.role ? (
-          <p className="text-sm text-muted-foreground">Role: {project.role}</p>
-        ) : null}
-        <DialogDescription className="text-sm leading-relaxed">
+        <DialogDescription className="text-base leading-relaxed text-pretty text-muted-foreground">
           {project.summary}
         </DialogDescription>
       </DialogHeader>
@@ -145,23 +165,30 @@ function ProjectContents({
       />
       {project.description ? <Markdown>{project.description}</Markdown> : null}
       {project.links ? (
-        <nav aria-label={`${project.name} links`} className="flex gap-4">
+        <nav
+          aria-label={`${project.name} links`}
+          className="flex flex-wrap gap-3"
+        >
           {project.links.live ? (
             <a
+              className={linkButtonClassName}
               href={project.links.live}
               rel="noopener noreferrer"
               target="_blank"
             >
               Live site
+              <ExternalLinkIcon aria-hidden="true" />
             </a>
           ) : null}
           {project.links.repository ? (
             <a
+              className={linkButtonClassName}
               href={project.links.repository}
               rel="noopener noreferrer"
               target="_blank"
             >
               Repository
+              <ExternalLinkIcon aria-hidden="true" />
             </a>
           ) : null}
         </nav>
@@ -177,15 +204,22 @@ function ProjectContents({
           onValueChange={(value) => onPartChange(String(value))}
           value={selectedPart.id}
         >
-          <TabsList aria-label={`${project.name} Platforms`}>
+          <TabsList
+            aria-label={`${project.name} Platforms`}
+            className="w-fit gap-1 rounded-full border-0 bg-white/5 p-1 ring-1 ring-white/10"
+          >
             {project.parts.map((part) => (
-              <TabsTab key={part.id} value={part.id}>
+              <TabsTab
+                className="rounded-full px-4 py-1.5 font-medium transition-colors data-active:border-b-0 data-active:bg-white/10 data-active:text-foreground"
+                key={part.id}
+                value={part.id}
+              >
                 {part.name}
               </TabsTab>
             ))}
           </TabsList>
           {project.parts.map((part) => (
-            <TabsPanel key={part.id} value={part.id}>
+            <TabsPanel className="pt-6" key={part.id} value={part.id}>
               <PartContents part={part} />
             </TabsPanel>
           ))}
@@ -197,8 +231,8 @@ function ProjectContents({
 
 function PartContents({ part }: { part: ProjectDetail["parts"][number] }) {
   return (
-    <section aria-label={part.name} className="space-y-5">
-      <p className="text-sm leading-relaxed text-muted-foreground">
+    <section aria-label={part.name} className="space-y-6">
+      <p className="text-base leading-relaxed text-pretty text-muted-foreground">
         {part.summary}
       </p>
       {part.description ? <Markdown>{part.description}</Markdown> : null}

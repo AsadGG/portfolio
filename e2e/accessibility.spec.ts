@@ -6,10 +6,16 @@ const wcag21AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 async function expectNoSeriousAxeViolations(
   page: import("@playwright/test").Page,
 ) {
+  // Wait for entrance animations to settle. Looping animations and ones
+  // driven by scroll position never finish on their own, so skip those.
   await page.evaluate(async () => {
-    const animations = document.documentElement.getAnimations({
-      subtree: true,
-    });
+    const animations = document.documentElement
+      .getAnimations({ subtree: true })
+      .filter(
+        (animation) =>
+          animation.timeline === document.timeline &&
+          animation.effect?.getComputedTiming().iterations !== Infinity,
+      );
     await Promise.all(
       animations.map((animation) => animation.finished.catch(() => undefined)),
     );

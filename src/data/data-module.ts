@@ -101,6 +101,8 @@ export const imageSchema = z.object({
   src: z.string().min(1),
   alt: z.string().trim().min(1),
   caption: z.string().min(1).optional(),
+  /** A card-sized copy for thumbnails, written by `pnpm images:cards`. */
+  cardSrc: z.string().min(1).optional(),
 });
 
 export type ProjectImage = z.infer<typeof imageSchema>;
@@ -796,6 +798,9 @@ export function createDataModule(options: DataModuleOptions) {
     return {
       ...image,
       src: new URL(image.src, contentBaseUrl).toString(),
+      ...(image.cardSrc
+        ? { cardSrc: new URL(image.cardSrc, contentBaseUrl).toString() }
+        : {}),
     };
   }
 

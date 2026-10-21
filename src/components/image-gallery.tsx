@@ -1,3 +1,10 @@
+import { cn } from "cn";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Maximize2Icon,
+  XIcon,
+} from "lucide-react";
 import { type KeyboardEvent, useRef, useState } from "react";
 
 import { Button } from "#/components/ui/button";
@@ -10,8 +17,8 @@ export type GalleryImage = {
 };
 
 const navigationButtonLabels = {
-  previous: { accessibleName: "Previous image", text: "Previous" },
-  next: { accessibleName: "Next image", text: "Next" },
+  previous: { accessibleName: "Previous image", icon: <ChevronLeftIcon /> },
+  next: { accessibleName: "Next image", icon: <ChevronRightIcon /> },
 };
 
 function GalleryNavigationButton({
@@ -28,12 +35,16 @@ function GalleryNavigationButton({
   return (
     <Button
       aria-label={label.accessibleName}
-      className={className}
+      className={cn(
+        "rounded-full border-white/12 bg-white/3 hover:border-white/25 hover:bg-white/8",
+        className,
+      )}
       onClick={onClick}
+      size="icon-lg"
       type="button"
       variant="outline"
     >
-      {label.text}
+      {label.icon}
     </Button>
   );
 }
@@ -77,15 +88,15 @@ export function ImageGallery({
   return (
     <section
       aria-label={`${label} image gallery`}
-      className="space-y-3"
+      className="space-y-4"
       onKeyDown={(event) =>
         handleGalleryNavigationKey(event, showPrevious, showNext)
       }
     >
-      <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-lg border bg-muted/30">
+      <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl bg-[radial-gradient(ellipse_at_50%_0%,color-mix(in_oklab,var(--electric-cyan)_10%,transparent),transparent_70%)] bg-black/30 ring-1 ring-white/10">
         <Button
           aria-label="View image full screen"
-          className="size-full rounded-none border-0 p-0 hover:bg-transparent"
+          className="group/stage size-full rounded-none border-0 p-0 hover:bg-transparent"
           onClick={() => setViewerOpen(true)}
           ref={imageButton}
           type="button"
@@ -94,13 +105,19 @@ export function ImageGallery({
           {images.map((image, index) => (
             <img
               alt={image.alt}
-              className="size-full object-contain"
+              className="size-full animate-in object-contain duration-300 fade-in-0 motion-reduce:animate-none"
               hidden={index !== currentIndex}
               key={image.url}
               loading={index === currentIndex ? "eager" : "lazy"}
               src={image.url}
             />
           ))}
+          <span
+            aria-hidden="true"
+            className="absolute right-3 bottom-3 grid size-9 place-items-center rounded-full bg-background/80 text-foreground opacity-0 ring-1 ring-white/10 backdrop-blur-md transition-opacity duration-200 group-hover/stage:opacity-100 group-focus-visible/stage:opacity-100"
+          >
+            <Maximize2Icon className="size-4" />
+          </span>
         </Button>
       </div>
       {images[currentIndex]?.caption ? (
@@ -108,26 +125,43 @@ export function ImageGallery({
           {images[currentIndex].caption}
         </p>
       ) : null}
-      <div className="grid grid-cols-3 items-center">
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4">
         {images.length > 1 ? (
           <GalleryNavigationButton
             direction="previous"
             onClick={showPrevious}
           />
-        ) : null}
-        <p
-          aria-live="polite"
-          className="justify-self-center text-sm text-muted-foreground"
-        >
-          {currentIndex + 1} / {images.length}
-        </p>
+        ) : (
+          <span />
+        )}
+        <div className="flex flex-col items-center gap-2">
+          <p
+            aria-live="polite"
+            className="font-mono text-xs text-muted-foreground tabular-nums"
+          >
+            {currentIndex + 1} / {images.length}
+          </p>
+          <div
+            aria-hidden="true"
+            className="h-0.5 w-full max-w-48 overflow-hidden rounded-full bg-white/10"
+          >
+            <div
+              className="h-full rounded-full bg-linear-to-r from-primary to-violet transition-[width] duration-300 ease-out"
+              style={{
+                width: `${((currentIndex + 1) / images.length) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
         {images.length > 1 ? (
           <GalleryNavigationButton
             direction="next"
             className="justify-self-end"
             onClick={showNext}
           />
-        ) : null}
+        ) : (
+          <span />
+        )}
       </div>
       <Dialog
         open={viewerOpen}
@@ -139,7 +173,7 @@ export function ImageGallery({
       >
         <DialogContent
           aria-label="Image viewer"
-          className="fixed top-0 left-0 z-[60] flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center gap-4 rounded-none border-0 bg-black p-4 text-white sm:max-w-none"
+          className="fixed top-0 left-0 z-60 flex h-dvh w-screen max-w-none translate-x-0 translate-y-0 flex-col items-center justify-center gap-5 rounded-none border-0 bg-black/95 p-4 text-white ring-0 backdrop-blur-xl sm:max-w-none"
           onKeyDown={(event) =>
             handleGalleryNavigationKey(event, showPrevious, showNext)
           }
@@ -147,17 +181,19 @@ export function ImageGallery({
         >
           <Button
             aria-label="Close image viewer"
-            className="absolute top-4 right-4"
+            className="absolute top-4 right-4 rounded-full border-white/15 bg-white/5 hover:bg-white/10"
             onClick={() => setViewerOpen(false)}
             ref={closeButton}
+            size="icon-lg"
             type="button"
             variant="outline"
           >
-            Close
+            <XIcon />
           </Button>
           <img
             alt={images[currentIndex].alt}
-            className="max-h-[calc(100dvh-10rem)] max-w-full object-contain"
+            className="max-h-[calc(100dvh-10rem)] max-w-full animate-in rounded-lg object-contain duration-300 fade-in-0 zoom-in-[0.98] motion-reduce:animate-none"
+            key={images[currentIndex].url}
             src={images[currentIndex].url}
           />
           {images[currentIndex].caption ? (
@@ -172,7 +208,10 @@ export function ImageGallery({
                 onClick={showPrevious}
               />
             ) : null}
-            <p aria-live="polite" className="text-sm text-white/80">
+            <p
+              aria-live="polite"
+              className="font-mono text-xs text-white/80 tabular-nums"
+            >
               {currentIndex + 1} / {images.length}
             </p>
             {images.length > 1 ? (

@@ -52,10 +52,10 @@ export function SectionReveal({
       className={[
         className,
         state === "pending" || state === "waiting"
-          ? "translate-y-3 opacity-0"
+          ? "translate-y-6 opacity-0"
           : "translate-y-0 opacity-100",
         state === "revealed"
-          ? "transition-[opacity,transform] duration-500 ease-out"
+          ? "transition-[opacity,translate] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
           : "transition-none",
         "motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none",
       ]

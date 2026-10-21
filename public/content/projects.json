@@ -34,7 +34,8 @@
             {
               "src": "images/sunday-market/web/sign-up.webp",
               "alt": "Sunday Market Web app screen for Sign Up.",
-              "caption": "Web app · Sign Up"
+              "caption": "Web app · Sign Up",
+              "cardSrc": "cards/images/sunday-market/web/sign-up.webp"
             },
             {
               "src": "images/sunday-market/web/sign-in.webp",
@@ -296,7 +297,8 @@
             {
               "src": "images/wedwise/web/sign-up-setup-password-1.webp",
               "alt": "WedWise Web app screen for Sign Up Setup Password 1.",
-              "caption": "Web app · Sign Up Setup Password 1"
+              "caption": "Web app · Sign Up Setup Password 1",
+              "cardSrc": "cards/images/wedwise/web/sign-up-setup-password-1.webp"
             },
             {
               "src": "images/wedwise/web/sign-up-setup-password-2.webp",
@@ -660,7 +662,8 @@
             {
               "src": "images/crypto-mining-platform/user/registration.webp",
               "alt": "Private Crypto Mining Club (PCMC) Customer app screen for Registration.",
-              "caption": "Customer app · Registration"
+              "caption": "Customer app · Registration",
+              "cardSrc": "cards/images/crypto-mining-platform/user/registration.webp"
             },
             {
               "src": "images/crypto-mining-platform/user/2f-verification.webp",
@@ -1002,7 +1005,8 @@
             {
               "src": "images/azad/mobile/onboarding-24.webp",
               "alt": "Azaad Mobile app screen for Onboarding 24.",
-              "caption": "Mobile app · Onboarding 24"
+              "caption": "Mobile app · Onboarding 24",
+              "cardSrc": "cards/images/azad/mobile/onboarding-24.webp"
             },
             {
               "src": "images/azad/mobile/onboarding-25.webp",
@@ -1574,7 +1578,8 @@
             {
               "src": "images/siddiq-sons/mobile/sign-in.webp",
               "alt": "Siddiq & Sons Mobile app screen for Sign In.",
-              "caption": "Mobile app · Sign In"
+              "caption": "Mobile app · Sign In",
+              "cardSrc": "cards/images/siddiq-sons/mobile/sign-in.webp"
             },
             {
               "src": "images/siddiq-sons/mobile/dashboard-scrolled-up.webp",
@@ -1696,7 +1701,8 @@
             {
               "src": "images/sports-fan/mobile/onboarding-1.webp",
               "alt": "Sports Fan Mobile app screen for Onboarding 1.",
-              "caption": "Mobile app · Onboarding 1"
+              "caption": "Mobile app · Onboarding 1",
+              "cardSrc": "cards/images/sports-fan/mobile/onboarding-1.webp"
             },
             {
               "src": "images/sports-fan/mobile/onboarding-2.webp",
@@ -2049,7 +2055,8 @@
             {
               "src": "images/new-earth/mobile/splash.webp",
               "alt": "New Earth Mobile app screen for Splash.",
-              "caption": "Mobile app · Splash"
+              "caption": "Mobile app · Splash",
+              "cardSrc": "cards/images/new-earth/mobile/splash.webp"
             },
             {
               "src": "images/new-earth/mobile/log-in.webp",
@@ -2127,7 +2134,8 @@
             {
               "src": "images/fit-and-fight/web/sign-in.webp",
               "alt": "Fit and Fight Web app screen for Sign In.",
-              "caption": "Web app · Sign In"
+              "caption": "Web app · Sign In",
+              "cardSrc": "cards/images/fit-and-fight/web/sign-in.webp"
             },
             {
               "src": "images/fit-and-fight/web/dashboard.webp",
@@ -2295,7 +2303,8 @@
             {
               "src": "images/md-aider/mobile/md-aider-splash.webp",
               "alt": "MD AIDer Mobile app screen for MD Aider Splash.",
-              "caption": "Mobile app · MD Aider Splash"
+              "caption": "Mobile app · MD Aider Splash",
+              "cardSrc": "cards/images/md-aider/mobile/md-aider-splash.webp"
             },
             {
               "src": "images/md-aider/mobile/md-aider-signup.webp",
@@ -2510,7 +2519,8 @@
             {
               "src": "images/viracore-browser/mobile/splash-1.webp",
               "alt": "ViraCore Browser Mobile app screen for Splash 1.",
-              "caption": "Mobile app · Splash 1"
+              "caption": "Mobile app · Splash 1",
+              "cardSrc": "cards/images/viracore-browser/mobile/splash-1.webp"
             },
             {
               "src": "images/viracore-browser/mobile/splash.webp",
@@ -2553,7 +2563,8 @@
             {
               "src": "images/salon-healthcare-platform/mobile/user/us-splash.webp",
               "alt": "UR Salon Customer app screen for Us Splash.",
-              "caption": "Customer app · Us Splash"
+              "caption": "Customer app · Us Splash",
+              "cardSrc": "cards/images/salon-healthcare-platform/mobile/user/us-splash.webp"
             },
             {
               "src": "images/salon-healthcare-platform/mobile/staff/login-1.webp",
@@ -2785,7 +2796,8 @@
             {
               "src": "images/laundry-app/web-admin/new-password-1.webp",
               "alt": "UR Laundry Admin web app screen for New Password 1.",
-              "caption": "Admin web app · New Password 1"
+              "caption": "Admin web app · New Password 1",
+              "cardSrc": "cards/images/laundry-app/web-admin/new-password-1.webp"
             },
             {
               "src": "images/laundry-app/web-admin/otp-verifications-1.webp",
@@ -4112,7 +4124,8 @@
             {
               "src": "images/nano/mobile/first-time-app-launch.webp",
               "alt": "Nano Mobile app screen for First Time App Launch.",
-              "caption": "Mobile app · First Time App Launch"
+              "caption": "Mobile app · First Time App Launch",
+              "cardSrc": "cards/images/nano/mobile/first-time-app-launch.webp"
             },
             {
               "src": "images/nano/mobile/auth-create-account.webp",
@@ -4423,7 +4436,8 @@
             {
               "src": "images/gripsun/admin-console/38-login.webp",
               "alt": "Gripsun Privilege Club Web Console screen for Login.",
-              "caption": "Web Console · Login"
+              "caption": "Web Console · Login",
+              "cardSrc": "cards/images/gripsun/admin-console/38-login.webp"
             },
             {
               "src": "images/gripsun/admin-console/00-home.webp",
@@ -4958,7 +4972,8 @@
             {
               "src": "images/dowc/web/registration-from-invite-link.webp",
               "alt": "DOWC Web app screen for Registration From Invite Link.",
-              "caption": "Web app · Registration From Invite Link"
+              "caption": "Web app · Registration From Invite Link",
+              "cardSrc": "cards/images/dowc/web/registration-from-invite-link.webp"
             },
             {
               "src": "images/dowc/web/login-1.webp",
@@ -5239,7 +5254,8 @@
             {
               "src": "images/butt-ems/web-app/add-a-designation-pop-up.webp",
               "alt": "BUTT-EMS Web app screen for Add A Designation Pop Up.",
-              "caption": "Web app · Add A Designation Pop Up"
+              "caption": "Web app · Add A Designation Pop Up",
+              "cardSrc": "cards/images/butt-ems/web-app/add-a-designation-pop-up.webp"
             },
             {
               "src": "images/butt-ems/web-app/add-a-new-employee-1.webp",
@@ -5598,7 +5614,8 @@
             {
               "src": "images/rameen-solar/mobile/admin-login-page.webp",
               "alt": "Rameen Solar Mobile app screen for Admin Login Page.",
-              "caption": "Mobile app · Admin Login Page"
+              "caption": "Mobile app · Admin Login Page",
+              "cardSrc": "cards/images/rameen-solar/mobile/admin-login-page.webp"
             },
             {
               "src": "images/rameen-solar/mobile/dashboard.webp",
@@ -5866,7 +5883,8 @@
             {
               "src": "images/inverex/mobile/signup.webp",
               "alt": "Inverex Loyalty Mobile app screen for Signup.",
-              "caption": "Mobile app · Signup"
+              "caption": "Mobile app · Signup",
+              "cardSrc": "cards/images/inverex/mobile/signup.webp"
             },
             {
               "src": "images/inverex/mobile/otp-popup.webp",
