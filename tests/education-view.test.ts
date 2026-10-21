@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
+
 import {
   createDataModule,
   GENERIC_CONTENT_ERROR_MESSAGE,

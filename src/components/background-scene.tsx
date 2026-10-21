@@ -12,6 +12,7 @@ import {
   type Points as ThreePoints,
   Vector3,
 } from "three";
+
 import {
   getActiveSection,
   subscribeToActiveSection,

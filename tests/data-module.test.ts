@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 import { z } from "zod";
+
 import {
   ContentError,
   createDataModule,
@@ -96,7 +97,9 @@ describe("content document transport", () => {
 
     await expect(
       module.fetchListDocument("projects.json", projectSchema),
-    ).rejects.toMatchObject({ message: GENERIC_CONTENT_ERROR_MESSAGE });
+    ).rejects.toMatchObject({
+      message: GENERIC_CONTENT_ERROR_MESSAGE,
+    });
   });
 
   it("accepts optional role and URL links on a Project", () => {

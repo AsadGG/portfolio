@@ -9,10 +9,12 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { cn } from "cn";
 import { useState } from "react";
+
 import { BackgroundLayer } from "#/components/background-layer";
 import { createDataModule } from "#/data/data-module";
 import { DataModuleProvider } from "#/data/data-module-provider";
 import TanStackQueryDevtools from "#/integrations/tanstack-query/devtools";
+
 import appCss from "#/styles.css?url";
 
 const bodyClassName = cn(

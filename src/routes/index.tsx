@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { z } from "zod";
+
 import { ActiveSectionTracker } from "#/components/active-section-tracker";
 import { ContactLinks } from "#/components/contact-links";
 import { EducationSection } from "#/components/education-section";
@@ -38,7 +39,7 @@ function Home() {
   const returnFocus = useRef<HTMLAnchorElement | null>(null);
 
   const closeProject = () => {
-    navigate({
+    void navigate({
       search: (previous) => ({
         ...previous,
         project: undefined,

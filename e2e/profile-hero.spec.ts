@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+
 import { expectContactLinks } from "./contact-links";
 
 test("Profile hero shows its content and safe contact links", async ({

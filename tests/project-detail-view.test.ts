@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
+
 import { createDataModule } from "../src/data/data-module";
 
 function envelope(data: unknown) {

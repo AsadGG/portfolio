@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import { type GalleryImage, ImageGallery } from "#/components/image-gallery";
 import { Markdown } from "#/components/markdown";
 import { Badge } from "#/components/ui/badge";
@@ -59,7 +60,7 @@ export function ProjectDialog({
     if (!projectId) return;
     let active = true;
     setDetail({ status: "loading", projectId });
-    getProjectDetail(projectId).then((result) => {
+    void getProjectDetail(projectId).then((result) => {
       if (!active) return;
       if (result.status === "ready") {
         setDetail({ ...result, projectId });

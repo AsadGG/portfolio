@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+
 import type { BackgroundQuality } from "#/components/background-scene";
 
 const BackgroundScene = lazy(() => import("#/components/background-scene"));

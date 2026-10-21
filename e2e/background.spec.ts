@@ -185,7 +185,10 @@ test("without WebGL the gradient stays visible and the 3D chunk is not requested
     if (request.resourceType() === "script") scriptRequests.push(request.url());
   });
   await page.addInitScript(() => {
-    const getContext = HTMLCanvasElement.prototype.getContext;
+    const getContext = Object.getOwnPropertyDescriptor(
+      HTMLCanvasElement.prototype,
+      "getContext",
+    )?.value as typeof HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (
       this: HTMLCanvasElement,
       contextType,

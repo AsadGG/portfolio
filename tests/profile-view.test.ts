@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
+
 import {
   createDataModule,
   GENERIC_CONTENT_ERROR_MESSAGE,
@@ -29,7 +30,9 @@ function createModule(fetchImplementation: typeof globalThis.fetch) {
 function profileResponse(record: unknown) {
   return new Response(
     JSON.stringify({ statusCode: 200, message: "Profile", data: record }),
-    { status: 200 },
+    {
+      status: 200,
+    },
   );
 }
 

@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext } from "react";
+
 import type { createDataModule } from "#/data/data-module";
 
 type DataModule = ReturnType<typeof createDataModule>;

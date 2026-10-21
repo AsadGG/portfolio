@@ -1,4 +1,5 @@
 import { useLiveQuery } from "@tanstack/react-db";
+
 import {
   ContentError,
   GENERIC_CONTENT_ERROR_MESSAGE,
@@ -7,13 +8,13 @@ import {
 import { useDataModule } from "#/data/data-module-provider";
 
 export function useIntro(): ViewState<string> {
+  const dataModule = useDataModule();
   const {
     engagementsCollection,
     engagementsView,
     profileCollection,
     profileView,
-    resolveIntro,
-  } = useDataModule();
+  } = dataModule;
   const profileQuery = useLiveQuery(profileView);
   const engagementQuery = useLiveQuery(engagementsView);
   const failedCollections = [
@@ -67,7 +68,7 @@ export function useIntro(): ViewState<string> {
     }
     return {
       status: "ready",
-      data: resolveIntro(profile.intro, engagements),
+      data: dataModule.resolveIntro(profile.intro, engagements),
       retry,
     };
   }

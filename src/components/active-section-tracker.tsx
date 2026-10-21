@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import { setActiveSection } from "#/active-section-store";
 import { SECTION_IDS } from "#/sections";
 

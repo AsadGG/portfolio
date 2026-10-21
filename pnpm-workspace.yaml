@@ -1,5 +1,11 @@
-minimumReleaseAgeExclude:
-  - '@tanstack/db-ivm@0.2.0'
-  - '@tanstack/db@0.14.0'
-  - '@tanstack/query-db-collection@1.4.4'
-  - '@tanstack/react-db@0.5.9'
+overrides:
+  "vite@*": "catalog:"
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@1.3.0
+  vite-plus: 1.3.0
+strictPeerDependencies: true
+peerDependencyRules:
+  allowedVersions:
+    # Vite+ core 1.3.0 bundles Vite 8.3.4 but publishes the wrapper as 1.3.0.
+    # Keep this exception pinned to that wrapper version; check all other peers strictly.
+    vite: 1.3.0

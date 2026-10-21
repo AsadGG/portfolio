@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+
 import { expectContactLinks } from "./contact-links";
 
 test("footer is the last landmark and repeats the Profile contact links", async ({

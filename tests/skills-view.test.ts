@@ -1,5 +1,6 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
+
 import {
   createDataModule,
   GENERIC_CONTENT_ERROR_MESSAGE,
@@ -105,25 +106,25 @@ describe("Skills section view", () => {
     });
   });
 
-  it.each([
-    "skill-categories.json",
-    "skills.json",
-  ])("returns an error when %s fails", async (failedDocument) => {
-    const module = createModule(async (input) => {
-      const path = requestPath(input);
-      if (path.endsWith(failedDocument)) {
-        return new Response("unavailable", { status: 503 });
-      }
-      return envelope(
-        path.endsWith("skill-categories.json") ? categories : skills,
-      );
-    });
+  it.each(["skill-categories.json", "skills.json"])(
+    "returns an error when %s fails",
+    async (failedDocument) => {
+      const module = createModule(async (input) => {
+        const path = requestPath(input);
+        if (path.endsWith(failedDocument)) {
+          return new Response("unavailable", { status: 503 });
+        }
+        return envelope(
+          path.endsWith("skill-categories.json") ? categories : skills,
+        );
+      });
 
-    await expect(module.getSkillsSection()).resolves.toMatchObject({
-      status: "error",
-      message: GENERIC_CONTENT_ERROR_MESSAGE,
-    });
-  });
+      await expect(module.getSkillsSection()).resolves.toMatchObject({
+        status: "error",
+        message: GENERIC_CONTENT_ERROR_MESSAGE,
+      });
+    },
+  );
 
   it("retries both Skills documents and recovers when both become available", async () => {
     let available = false;
