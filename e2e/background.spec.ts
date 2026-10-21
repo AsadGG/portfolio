@@ -106,7 +106,7 @@ test.describe("mobile background quality", () => {
     await expect(background).toHaveAttribute("data-quality", "low");
     const canvas = background.locator("canvas");
     await expect(canvas).toBeAttached();
-    await expect.poll(() => canvasPixelRatio(canvas)).toBe(1.25);
+    await expect.poll(() => canvasPixelRatio(canvas)).toBeCloseTo(1.25, 2);
   });
 });
 

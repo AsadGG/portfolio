@@ -339,7 +339,7 @@ test("Project Description renders raw HTML as literal text and omits missing con
 }) => {
   await interceptProjectDescription(page, "gripsun", undefined);
 
-  await page.goto("/?project=gripsun");
+  await page.goto("/?project=gripsun&part=api");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText(/installer claims and cashback/)).toHaveCount(
