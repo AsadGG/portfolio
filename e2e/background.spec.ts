@@ -55,6 +55,7 @@ test("reduced motion keeps a still background while scrolling to Education", asy
 
   const background = page.locator("[data-background]");
   await expect(background).toHaveAttribute("data-motion", "static");
+  await expect(background).toHaveAttribute("data-background", "canvas");
   await expect(background.locator("canvas")).toBeAttached();
 
   await page
@@ -82,6 +83,7 @@ test("changing to reduced motion updates the background without reloading", asyn
 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(background).toHaveAttribute("data-motion", "static");
+  await expect(background).toHaveAttribute("data-background", "canvas");
   await expect(background.locator("canvas")).toBeAttached();
 
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -96,7 +98,7 @@ test.describe("mobile background quality", () => {
     hasTouch: true,
   });
 
-  test("uses low quality and renders at a DPR of 1.25", async ({ page }) => {
+  test("uses low quality and caps the canvas DPR at 1.25", async ({ page }) => {
     await page.goto("/");
 
     const background = page.locator("[data-background]");
@@ -104,7 +106,7 @@ test.describe("mobile background quality", () => {
     await expect(background).toHaveAttribute("data-quality", "low");
     const canvas = background.locator("canvas");
     await expect(canvas).toBeAttached();
-    await expect.poll(() => canvasPixelRatio(canvas)).toBeCloseTo(1.25, 1);
+    await expect.poll(() => canvasPixelRatio(canvas)).toBe(1.25);
   });
 });
 

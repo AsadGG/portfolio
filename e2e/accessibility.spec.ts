@@ -74,10 +74,11 @@ test("accessible content states have no serious or critical axe violations", asy
   await expectNoSeriousAxeViolations(page);
   await page.keyboard.press("Escape");
 
-  await page.goto("/?project=gripsun&part=admin-console");
-  await expect(
-    page.getByRole("tab", { name: "Admin Console" }),
-  ).toHaveAttribute("aria-selected", "true");
+  await page.goto("/?project=gripsun&part=web-console");
+  await expect(page.getByRole("tab", { name: "Web Console" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expectNoSeriousAxeViolations(page);
 });
 

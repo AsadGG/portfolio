@@ -1,7 +1,7 @@
-import { useIntro } from "#/data/intro-view";
 import { SectionReveal } from "#/components/section-reveal";
 import { SectionState } from "#/components/section-state";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useIntro } from "#/data/intro-view";
 
 export function IntroSection() {
   const intro = useIntro();

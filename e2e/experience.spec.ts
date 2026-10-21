@@ -61,17 +61,36 @@ test("Experience shows ordered Project cards with Skill chips and Client names",
     .getByRole("heading", { level: 3, name: "UrApp Technologies" })
     .locator("xpath=..");
   await expect(urapp.getByRole("heading", { level: 4 })).toHaveText([
+    "Sunday Market",
     "WedWise",
-    "Laundry Operations App",
-    "Salon & Healthcare Platform",
-    "Crypto-Mining Platform",
+    "Private Crypto Mining Club (PCMC)",
+    "Azaad",
+    "Siddiq & Sons",
+    "Sports Fan",
+    "New Earth",
+    "Fit and Fight",
+    "MD AIDer",
+    "ViraCore Browser",
+    "UR Salon",
+    "UR Laundry",
   ]);
+  const cimple = experience
+    .getByRole("heading", { level: 3, name: "2Cimple" })
+    .locator("xpath=..");
+  await expect(cimple.getByRole("heading", { level: 4 })).toHaveText(["Nano"]);
   await expect(urapp.getByText("React", { exact: true }).first()).toBeVisible();
   await expect(urapp.getByText("ky", { exact: true }).first()).toBeVisible();
 
   const freelance = experience
     .getByRole("heading", { level: 3, name: "Freelance" })
     .locator("xpath=..");
+  await expect(freelance.getByRole("heading", { level: 4 })).toHaveText([
+    "Gripsun Privilege Club",
+    "DOWC",
+    "BUTT-EMS",
+    "Rameen Solar",
+    "Inverex Loyalty",
+  ]);
   await expect(
     freelance.getByRole("heading", {
       level: 4,
@@ -92,10 +111,11 @@ test("Project cards show their first Image or a no-image placeholder", async ({
   const wedWiseCard = experience
     .getByRole("heading", { level: 4, name: "WedWise" })
     .locator("xpath=../..");
+  await wedWiseCard.scrollIntoViewIfNeeded();
   const thumbnail = wedWiseCard.getByRole("img");
   await expect(thumbnail).toHaveAttribute(
     "alt",
-    "Placeholder image for WedWise",
+    "WedWise Web app screen for Sign Up Setup Password 1.",
   );
   await expect
     .poll(() =>
@@ -104,17 +124,25 @@ test("Project cards show their first Image or a no-image placeholder", async ({
     .toBeGreaterThan(0);
 
   const cryptoCard = experience
-    .getByRole("heading", { level: 4, name: "Crypto-Mining Platform" })
+    .getByRole("heading", {
+      level: 4,
+      name: "Private Crypto Mining Club (PCMC)",
+    })
     .locator("xpath=../..");
-  await expect(cryptoCard.locator("img")).toHaveCount(0);
-  const placeholder = cryptoCard.locator(
-    '[aria-label="Placeholder image for Crypto-Mining Platform"]',
+  await cryptoCard.scrollIntoViewIfNeeded();
+  const pcmcThumbnail = cryptoCard.getByRole("img");
+  await expect(pcmcThumbnail).toHaveAttribute(
+    "alt",
+    "Private Crypto Mining Club (PCMC) Customer app screen for Registration.",
   );
-  await expect(placeholder).toContainText("Placeholder");
-  await expect(placeholder).toContainText("Crypto-Mining Platform");
+  await expect
+    .poll(() =>
+      pcmcThumbnail.evaluate((image: HTMLImageElement) => image.naturalWidth),
+    )
+    .toBeGreaterThan(0);
 });
 
-test("Gripsun card combines Part Skills and falls back to the Admin Console Image", async ({
+test("Gripsun card combines Part Skills and uses its Web Console image", async ({
   page,
 }) => {
   await page.goto("/");
@@ -131,16 +159,14 @@ test("Gripsun card combines Part Skills and falls back to the Admin Console Imag
   await expect(skills.getByText("Playwright", { exact: true })).toBeVisible();
   await expect(skills.getByText("Expo", { exact: true })).toBeVisible();
 
-  const thumbnail = gripsunCard.getByRole("img");
-  await expect(thumbnail).toHaveAttribute(
-    "alt",
-    "Placeholder image for the Gripsun Admin Console claims view",
-  );
+  const thumbnail = gripsunCard.getByRole("img", {
+    name: "Gripsun Privilege Club Web Console screen for Login.",
+  });
+  await thumbnail.scrollIntoViewIfNeeded();
   await expect(thumbnail).toHaveAttribute(
     "src",
-    /images\/gripsun\/admin-console\/claims\.svg$/,
+    /images\/gripsun\/admin-console\/38-login\.webp$/,
   );
-  await thumbnail.scrollIntoViewIfNeeded();
   await expect
     .poll(() =>
       thumbnail.evaluate((image: HTMLImageElement) => image.naturalWidth),

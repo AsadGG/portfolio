@@ -1,8 +1,8 @@
-import { useSkillsSection } from "#/data/skills-view";
 import { SectionReveal } from "#/components/section-reveal";
 import { SectionState } from "#/components/section-state";
 import { Badge } from "#/components/ui/badge";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useSkillsSection } from "#/data/skills-view";
 
 export function SkillsSection() {
   const skills = useSkillsSection();

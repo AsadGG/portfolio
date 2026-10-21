@@ -1,7 +1,7 @@
-import { useEducation } from "#/data/education-view";
 import { SectionReveal } from "#/components/section-reveal";
 import { SectionState } from "#/components/section-state";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useEducation } from "#/data/education-view";
 
 export function EducationSection() {
   const education = useEducation();

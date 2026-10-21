@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import type { ProjectDetail } from "#/data/data-module";
-import { useDataModule } from "#/data/data-module-provider";
 import { type GalleryImage, ImageGallery } from "#/components/image-gallery";
 import { Markdown } from "#/components/markdown";
 import { Badge } from "#/components/ui/badge";
@@ -12,6 +10,8 @@ import {
   DialogTitle,
 } from "#/components/ui/dialog";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
+import type { ProjectDetail } from "#/data/data-module";
+import { useDataModule } from "#/data/data-module-provider";
 
 type DetailState =
   | { status: "loading"; projectId?: string }
@@ -89,7 +89,7 @@ export function ProjectDialog({
         aria-label={
           currentDetail.status === "ready" ? currentDetail.data.name : "Project"
         }
-        className="max-h-[min(80vh,48rem)] max-w-2xl overflow-y-auto p-8"
+        className="max-h-[min(80vh,48rem)] overflow-y-auto p-8 sm:max-w-2xl"
       >
         {currentDetail.status === "ready" ? (
           <ProjectContents
@@ -169,12 +169,14 @@ function ProjectContents({
         label={`Skills used in ${project.name}`}
         skills={project.skills}
       />
-      {selectedPart ? (
+      {project.parts.length === 1 && selectedPart ? (
+        <PartContents part={selectedPart} />
+      ) : selectedPart ? (
         <Tabs
           onValueChange={(value) => onPartChange(String(value))}
           value={selectedPart.id}
         >
-          <TabsList aria-label={`${project.name} Parts`}>
+          <TabsList aria-label={`${project.name} Platforms`}>
             {project.parts.map((part) => (
               <TabsTab key={part.id} value={part.id}>
                 {part.name}

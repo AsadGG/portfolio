@@ -1,8 +1,8 @@
-import { useHighlights } from "#/data/highlights-view";
 import { SectionReveal } from "#/components/section-reveal";
 import { SectionState } from "#/components/section-state";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useHighlights } from "#/data/highlights-view";
 
 export function HighlightsSection() {
   const highlights = useHighlights();

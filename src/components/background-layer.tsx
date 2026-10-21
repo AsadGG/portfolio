@@ -25,14 +25,10 @@ export function BackgroundLayer() {
 
     const deferScene = () => {
       cancelDeferredScene?.();
-      if (currentQuality === "low" || motionPreference.matches || !hasWebGL()) {
-        return;
-      }
+      if (!hasWebGL()) return;
 
       cancelDeferredScene = runWhenIdle(() => {
-        if (!motionPreference.matches && currentQuality === "high") {
-          setMode("canvas");
-        }
+        setMode("canvas");
       });
     };
 
@@ -41,7 +37,7 @@ export function BackgroundLayer() {
       setReducedMotion(shouldReduceMotion);
       if (shouldReduceMotion) {
         cancelDeferredScene?.();
-        setMode("gradient");
+        setMode(hasWebGL() ? "canvas" : "gradient");
       } else {
         deferScene();
       }
@@ -52,12 +48,7 @@ export function BackgroundLayer() {
       if (nextQuality === currentQuality) return;
       currentQuality = nextQuality;
       setQuality(nextQuality);
-      if (nextQuality === "low") {
-        cancelDeferredScene?.();
-        setMode("gradient");
-      } else {
-        deferScene();
-      }
+      deferScene();
     };
 
     setQuality(currentQuality);

@@ -1,7 +1,7 @@
-import { useProfile } from "#/data/profile-view";
 import { ContactLinks } from "#/components/contact-links";
 import { SectionState } from "#/components/section-state";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useProfile } from "#/data/profile-view";
 
 export function Footer() {
   const profile = useProfile();

@@ -320,8 +320,8 @@ describe("Experience view", () => {
             skillIds: [],
             images: [
               {
-                src: "images/gripsun/admin-console/admin.svg",
-                alt: "Admin Console placeholder",
+                src: "images/gripsun/admin-console/01-login.webp",
+                alt: "Console sign-in screen",
               },
             ],
           },
@@ -334,8 +334,8 @@ describe("Experience view", () => {
     expect(view.status).toBe("ready");
     if (view.status === "ready") {
       expect(view.data[0].projects[0].thumbnail).toEqual({
-        src: "http://content.test/images/gripsun/admin-console/admin.svg",
-        alt: "Admin Console placeholder",
+        src: "http://content.test/images/gripsun/admin-console/01-login.webp",
+        alt: "Console sign-in screen",
       });
     }
   });

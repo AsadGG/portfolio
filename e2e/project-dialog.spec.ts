@@ -11,6 +11,12 @@ type ProjectImage = {
   caption?: string;
 };
 
+type ProjectImages = {
+  id: string;
+  images: ProjectImage[];
+  parts: Array<{ images: ProjectImage[] }>;
+};
+
 async function interceptProjectDescription(
   page: Page,
   projectId: string,
@@ -37,11 +43,18 @@ async function interceptProjectImages(
   await page.route("**/content/projects.json", async (route) => {
     const response = await route.fetch();
     const document = (await response.json()) as {
-      data: Array<{ id: string; images: ProjectImage[] }>;
+      data: ProjectImages[];
     };
     const project = document.data.find(({ id }) => id === projectId);
     if (!project) throw new Error(`Project not found: ${projectId}`);
-    project.images = updateImages(project.images);
+    const part = project.parts.find(({ images }) => images.length > 0);
+    if (project.images.length > 0) {
+      project.images = updateImages(project.images);
+    } else if (part) {
+      part.images = updateImages(part.images);
+    } else {
+      throw new Error(`Project has no images: ${projectId}`);
+    }
     await route.fulfill({ response, body: JSON.stringify(document) });
   });
 }
@@ -82,17 +95,48 @@ test("Project Parts are browsable in URL-backed tabs", async ({ page }) => {
   await expect(dialog).toBeVisible();
   const tabs = dialog.getByRole("tablist");
   await expect(tabs.getByRole("tab")).toHaveText([
+    "Web Console",
+    "Mobile",
     "API",
-    "Admin Console",
-    "Mobile App",
   ]);
   const apiTab = dialog.getByRole("tab", { name: "API" });
+  const consoleTab = dialog.getByRole("tab", { name: "Web Console" });
+  await expect(consoleTab).toHaveAttribute("aria-selected", "true");
+  await expect(
+    dialog.getByRole("region", { name: "Web Console image gallery" }),
+  ).toBeVisible();
+  await expect(
+    dialog
+      .getByRole("region", { name: "Web Console image gallery" })
+      .getByText("1 / 39"),
+  ).toBeVisible();
+  await expect(
+    dialog.getByText(/React and TanStack staff console for products/),
+  ).toBeVisible();
+  await expect(
+    dialog.getByRole("list", { name: "Skills used in Web Console" }),
+  ).toContainText("React");
+
+  const mobileTab = dialog.getByRole("tab", { name: "Mobile" });
+  await consoleTab.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(mobileTab).toBeFocused();
+  await mobileTab.click();
+  await expect(page).toHaveURL(/part=mobile/);
+  await expect(
+    dialog.getByText(/Expo and React Native app for solar customers/),
+  ).toBeVisible();
+
+  await apiTab.click();
+  await expect(page).toHaveURL(/part=api/);
   await expect(apiTab).toHaveAttribute("aria-selected", "true");
   await expect(
     dialog.getByText("Fastify, TypeScript, PostgreSQL and Kysely."),
   ).toBeVisible();
   await expect(
-    dialog.getByText("Vitest integration tests call the real HTTP routes"),
+    dialog.getByText(
+      "A shared Fastify and PostgreSQL API supports the member app and staff console.",
+    ),
   ).toBeVisible();
   await expect(
     dialog.getByRole("list", { name: "Skills used in API" }),
@@ -101,43 +145,27 @@ test("Project Parts are browsable in URL-backed tabs", async ({ page }) => {
     dialog.getByRole("region", { name: "API image gallery" }),
   ).toHaveCount(0);
 
-  const adminTab = dialog.getByRole("tab", { name: "Admin Console" });
-  await apiTab.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(adminTab).toBeFocused();
-  await dialog.getByRole("tab", { name: "Admin Console" }).click();
-  await expect(page).toHaveURL(/part=admin-console/);
-  await expect(
-    dialog.getByRole("region", { name: "Admin Console image gallery" }),
-  ).toBeVisible();
-  await expect(
-    dialog
-      .getByRole("region", { name: "Admin Console image gallery" })
-      .getByText("1 / 2"),
-  ).toBeVisible();
-  await expect(
-    dialog.getByText("React with TanStack Router and Query."),
-  ).toBeVisible();
-  await expect(
-    dialog.getByRole("list", { name: "Skills used in Admin Console" }),
-  ).toContainText("React");
-
-  await page.goto("/?project=gripsun&part=mobile-app");
-  await expect(dialog.getByRole("tab", { name: "Mobile App" })).toHaveAttribute(
+  await page.goto("/?project=gripsun&part=mobile");
+  await expect(dialog.getByRole("tab", { name: "Mobile" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
-  await expect(dialog.getByText("React Native with Expo.")).toBeVisible();
+  await expect(
+    dialog.getByText(/Expo and React Native app for solar customers/),
+  ).toBeVisible();
 
   await page.goto("/?project=gripsun&part=nope");
-  await expect(dialog.getByRole("tab", { name: "API" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
+  await expect(
+    dialog.getByRole("tab", { name: "Web Console" }),
+  ).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(/part=nope/);
 
   await page.goto("/?project=wedwise");
-  await expect(page.getByRole("dialog").getByRole("tablist")).toHaveCount(0);
+  const wedWiseDialog = page.getByRole("dialog");
+  await expect(wedWiseDialog.getByRole("tablist")).toHaveCount(0);
+  await expect(
+    wedWiseDialog.getByRole("region", { name: "Web image gallery" }),
+  ).toBeVisible();
 });
 
 test("Project dialog Images can be browsed with buttons and arrow keys", async ({
@@ -145,27 +173,27 @@ test("Project dialog Images can be browsed with buttons and arrow keys", async (
 }) => {
   await page.goto("/?project=wedwise");
   const dialog = page.getByRole("dialog");
-  const gallery = dialog.getByRole("region", { name: "WedWise image gallery" });
+  const gallery = dialog.getByRole("region", { name: "Web image gallery" });
 
   await expect(gallery).toBeVisible();
-  await expect(gallery.getByText("1 / 3")).toBeVisible();
+  await expect(gallery.getByText("1 / 66")).toBeVisible();
   await expect(gallery.getByRole("img")).toHaveAttribute("alt", /.+/);
   await expect(gallery.locator("img").nth(1)).toHaveAttribute(
     "loading",
     "lazy",
   );
   await gallery.getByRole("button", { name: "Next image" }).click();
-  await expect(gallery.getByText("2 / 3")).toBeVisible();
+  await expect(gallery.getByText("2 / 66")).toBeVisible();
   const previousButton = gallery.getByRole("button", {
     name: "Previous image",
   });
   await previousButton.focus();
   await page.keyboard.press("ArrowLeft");
-  await expect(gallery.getByText("1 / 3")).toBeVisible();
+  await expect(gallery.getByText("1 / 66")).toBeVisible();
   await page.keyboard.press("ArrowRight");
-  await expect(gallery.getByText("2 / 3")).toBeVisible();
+  await expect(gallery.getByText("2 / 66")).toBeVisible();
   await page.keyboard.press("ArrowLeft");
-  await expect(gallery.getByText("1 / 3")).toBeVisible();
+  await expect(gallery.getByText("1 / 66")).toBeVisible();
 
   await page.keyboard.press("Tab");
   const nextButton = gallery.getByRole("button", { name: "Next image" });
@@ -184,7 +212,7 @@ test("an Image opens a full-screen viewer and returns focus to the shared galler
 
   await page.goto("/?project=wedwise");
   const dialog = page.getByRole("dialog");
-  const gallery = dialog.getByRole("region", { name: "WedWise image gallery" });
+  const gallery = dialog.getByRole("region", { name: "Web image gallery" });
   const imageControl = gallery.getByRole("button", {
     name: "View image full screen",
   });
@@ -196,7 +224,7 @@ test("an Image opens a full-screen viewer and returns focus to the shared galler
   await expect(viewer).toBeVisible();
   await expect(viewer.getByRole("img")).toHaveAttribute("alt", /.+/);
   await expect(viewer.getByText("Planning overview")).toBeVisible();
-  await expect(viewer.getByText("1 / 3")).toBeVisible();
+  await expect(viewer.getByText("1 / 66")).toBeVisible();
   await expect(
     viewer.getByRole("button", { name: "Previous image" }),
   ).toBeVisible();
@@ -210,16 +238,16 @@ test("an Image opens a full-screen viewer and returns focus to the shared galler
   ).toBeFocused();
 
   await nextButton.click();
-  await expect(viewer.getByText("2 / 3")).toBeVisible();
+  await expect(viewer.getByText("2 / 66")).toBeVisible();
   await viewer.getByRole("button", { name: "Previous image" }).click();
-  await expect(viewer.getByText("1 / 3")).toBeVisible();
+  await expect(viewer.getByText("1 / 66")).toBeVisible();
   await page.keyboard.press("ArrowRight");
-  await expect(viewer.getByText("2 / 3")).toBeVisible();
+  await expect(viewer.getByText("2 / 66")).toBeVisible();
   await page.keyboard.press("Escape");
 
   await expect(viewer).toHaveCount(0);
   await expect(dialog).toBeVisible();
-  await expect(gallery.getByText("2 / 3")).toBeVisible();
+  await expect(gallery.getByText("2 / 66")).toBeVisible();
   await expect(
     gallery.getByRole("button", { name: "View image full screen" }),
   ).toBeFocused();
@@ -227,7 +255,7 @@ test("an Image opens a full-screen viewer and returns focus to the shared galler
 
   await gallery.getByRole("button", { name: "View image full screen" }).click();
   await expect(viewer).toBeVisible();
-  await expect(viewer.getByText("2 / 3")).toBeVisible();
+  await expect(viewer.getByText("2 / 66")).toBeVisible();
   await viewer.getByRole("button", { name: "Close image viewer" }).click();
   await expect(viewer).toHaveCount(0);
   await expect(
@@ -235,10 +263,14 @@ test("an Image opens a full-screen viewer and returns focus to the shared galler
   ).toBeFocused();
 });
 
-test("a Project without Images has no gallery", async ({ page }) => {
-  await page.goto("/?project=crypto-mining-platform");
+test("a Part without Images has no gallery", async ({ page }) => {
+  await page.goto("/?project=gripsun&part=api");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("tab", { name: "API" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
   await expect(
     dialog.getByRole("region", { name: /image gallery/ }),
   ).toHaveCount(0);
@@ -254,7 +286,7 @@ test("a single Image shows its caption without carousel controls", async ({
   await page.goto("/?project=wedwise");
   const gallery = page
     .getByRole("dialog")
-    .getByRole("region", { name: "WedWise image gallery" });
+    .getByRole("region", { name: "Web image gallery" });
   await expect(gallery.getByRole("img")).toHaveAttribute("alt", /.+/);
   await expect(gallery.getByText("Planning overview")).toBeVisible();
   await expect(
@@ -272,11 +304,16 @@ test("a single Image shows its caption without carousel controls", async ({
 test("Project Descriptions render markdown with readable styling and safe links", async ({
   page,
 }) => {
+  await interceptProjectDescription(
+    page,
+    "wedwise",
+    "WedWise uses [React Hook Form](https://react-hook-form.com/) for forms.\n\nThe workflow includes:\n\n- registration\n- planning\n- contracts\n- invoices\n- guest management",
+  );
   await page.goto("/?project=wedwise");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
 
-  const description = dialog.getByTestId("markdown-content");
+  const description = dialog.getByTestId("markdown-content").first();
   await expect(description).toHaveClass(/prose/);
   await expect(description).toHaveClass(/prose-invert/);
   await expect(description.locator("ul > li")).toHaveCount(5);
@@ -292,7 +329,8 @@ test("Project Descriptions render markdown with readable styling and safe links"
   await expect(
     page
       .getByTestId("markdown-content")
-      .getByText(/Installers claim fitted units/),
+      .first()
+      .getByText(/installer claims and cashback/),
   ).toBeVisible();
 });
 
@@ -304,12 +342,12 @@ test("Project Description renders raw HTML as literal text and omits missing con
   await page.goto("/?project=gripsun");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
-  await expect(
-    dialog.getByText(/Installers claim fitted units for cashback/),
-  ).toHaveCount(0);
+  await expect(dialog.getByText(/installer claims and cashback/)).toHaveCount(
+    0,
+  );
   await expect(
     dialog.getByText(
-      "Vitest integration tests call the real HTTP routes against a real PostgreSQL database.",
+      "Vitest integration tests call real HTTP routes against PostgreSQL.",
     ),
   ).toBeVisible();
 });
@@ -320,7 +358,7 @@ test("raw HTML in a Project Description is displayed literally", async ({
   await interceptProjectDescription(page, "wedwise", "<b>x</b>");
 
   await page.goto("/?project=wedwise");
-  const description = page.getByTestId("markdown-content");
+  const description = page.getByTestId("markdown-content").first();
   await expect(description).toHaveText("<b>x</b>");
   await expect(description.locator("b")).toHaveCount(0);
 });
@@ -328,7 +366,7 @@ test("raw HTML in a Project Description is displayed literally", async ({
 test("the Project dialog closes with its close button and browser back", async ({
   page,
 }) => {
-  await page.goto("/?project=wedwise&part=mobile");
+  await page.goto("/?project=wedwise&part=web");
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", { name: "Close" }).click();

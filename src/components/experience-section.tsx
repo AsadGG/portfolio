@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useExperience } from "#/data/experience-view";
 import { SectionReveal } from "#/components/section-reveal";
 import { SectionState } from "#/components/section-state";
 import { Badge } from "#/components/ui/badge";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useExperience } from "#/data/experience-view";
 
 export function ExperienceSection({
   onProjectOpen,
@@ -46,10 +46,10 @@ export function ExperienceSection({
                   {engagement.projects.length > 0 ? (
                     <ul className="grid gap-4 pt-2 sm:grid-cols-2 xl:grid-cols-3">
                       {engagement.projects.map((project) => (
-                        <li key={project.id}>
+                        <li className="flex h-full" key={project.id}>
                           <Link
                             aria-label={`Open ${project.name}`}
-                            className="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+                            className="flex h-full w-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                             onClick={(event) =>
                               onProjectOpen?.(event.currentTarget)
                             }
@@ -61,7 +61,7 @@ export function ExperienceSection({
                             })}
                             to="/"
                           >
-                            <Card className="h-full">
+                            <Card className="h-full w-full">
                               {project.thumbnail ? (
                                 <img
                                   alt={project.thumbnail.alt}
@@ -83,7 +83,7 @@ export function ExperienceSection({
                                   </span>
                                 </div>
                               )}
-                              <CardHeader>
+                              <CardHeader className="min-h-20">
                                 <h4 className="text-base font-semibold tracking-tight">
                                   {project.name}
                                 </h4>
@@ -93,13 +93,13 @@ export function ExperienceSection({
                                   </p>
                                 ) : null}
                               </CardHeader>
-                              <CardContent className="space-y-4">
-                                <p className="leading-relaxed text-muted-foreground">
+                              <CardContent className="flex flex-1 flex-col gap-4">
+                                <p className="line-clamp-4 min-h-24 leading-relaxed text-muted-foreground">
                                   {project.summary}
                                 </p>
                                 <ul
                                   aria-label={`Skills used in ${project.name}`}
-                                  className="flex flex-wrap gap-2"
+                                  className="mt-auto flex flex-wrap gap-2 pt-2"
                                 >
                                   {project.skills.map((skill) => (
                                     <li key={skill}>

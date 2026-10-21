@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import type { ViewState } from "#/data/data-module";
 import { Button } from "#/components/ui/button";
+import type { ViewState } from "#/data/data-module";
 
 export function SectionState<T>({
   state,
