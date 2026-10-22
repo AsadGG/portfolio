@@ -121,7 +121,7 @@ function NotFound() {
           buttonVariants({ size: "lg" }),
           "h-11 rounded-full bg-linear-to-r from-primary to-violet px-6 text-sm text-primary-foreground hover:text-primary-foreground",
         )}
-        href="/"
+        href={import.meta.env.BASE_URL}
       >
         Return to the home page
       </a>

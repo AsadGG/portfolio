@@ -550,7 +550,9 @@ export interface DataModuleOptions {
 
 export function createDataModule(options: DataModuleOptions) {
   const baseUrl =
-    options.baseUrl ?? import.meta.env.VITE_CONTENT_BASE_URL ?? "/content/";
+    options.baseUrl ??
+    import.meta.env.VITE_CONTENT_BASE_URL ??
+    `${import.meta.env.BASE_URL}content/`;
   const contentBaseUrl = new URL(
     baseUrl,
     globalThis.location?.origin ?? "http://localhost",

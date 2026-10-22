@@ -10,6 +10,7 @@
     "generate-routes": "tsr generate",
     "images:cards": "node scripts/generate-card-images.ts",
     "build": "vp build",
+    "build:pages": "vp build --base=/portfolio/ && node scripts/prepare-github-pages.mjs",
     "preview": "vp preview",
     "test": "vp test run",
     "test:watch": "vp test",

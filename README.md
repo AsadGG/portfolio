@@ -29,6 +29,7 @@ The dev server runs at http://localhost:3000.
 | ------------------------- | -------------------------------------------------------------- |
 | `npm run dev`             | Start the dev server on port 3000                              |
 | `npm run build`           | Build the static site                                          |
+| `npm run build:pages`     | Build a GitHub Pages-ready site under `dist/client/`           |
 | `npm run preview`         | Serve the production build locally                             |
 | `npm test`                | Run unit tests in `tests/` once                                |
 | `npm run test:watch`      | Run unit tests in watch mode                                   |
@@ -40,6 +41,21 @@ The dev server runs at http://localhost:3000.
 | `npm run generate-routes` | Regenerate `src/routeTree.gen.ts`                              |
 
 A pre-commit hook runs `vp check --fix` on staged files.
+
+## GitHub Pages
+
+This repository is configured as the project site `AsadGG/portfolio`. The
+workflow in `.github/workflows/deploy-pages.yml` builds and deploys it at
+`https://asadgg.github.io/portfolio/` whenever a commit reaches `master`. You
+can also start a deployment from the Actions tab. Before the first deployment,
+open Settings > Pages and set the source under Build and deployment to
+**GitHub Actions**.
+
+To create the static files locally, run `npm run build:pages`. The upload
+directory is `dist/client/`. The build sets the `/portfolio/` base path, adjusts
+asset and content URLs, and creates `index.html` and `404.html` for GitHub Pages.
+If the repository name or hosting path changes, update `/portfolio/` in the
+`build:pages` command in `package.json`.
 
 ## Content
 

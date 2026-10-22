@@ -1,6 +1,6 @@
-# TanStack Start runs in SPA mode so the site can be hosted statically
+# TanStack Start runs in SPA mode so the site can be hosted on GitHub Pages
 
-The site will be hosted on GitHub Pages (`<username>.github.io`, served at `/`), which serves only static files. We keep the TanStack Start scaffold and run it in SPA mode. The build produces a static HTML shell, and the root route's meta and OG tags are baked into that shell. All other rendering happens on the client.
+The site is hosted from the `AsadGG/portfolio` repository as a GitHub Pages project site at `/portfolio/`. GitHub Pages serves static files, so we keep the TanStack Start scaffold and run it in SPA mode. The Pages build uses `/portfolio/` as the Vite base path, and the router and content loader use that base path for client navigation and JSON requests. The build copies the SPA shell to `index.html` and `404.html` so Pages can serve the client app on direct requests. The root route's meta and OG tags are baked into the shell. All other rendering happens on the client.
 
 ## Considered Options
 
